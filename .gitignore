@@ -1,2 +1,5 @@
 wrapper.vcxproj.filters
 wrapper.sdf
+ipch/
+Debug/
+wrapper.opensdf

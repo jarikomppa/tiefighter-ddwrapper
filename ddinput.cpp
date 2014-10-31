@@ -35,8 +35,7 @@ static void LoadDLL() {
 	char path[MAX_PATH];
 	GetSystemDirectoryA(path,MAX_PATH);
 	strcat_s(path, "\\ddraw.dll");	
-	//HMODULE ddrawdll=LoadLibraryA(path);
-	HMODULE ddrawdll=LoadLibraryA("csfix.dll");
+	HMODULE ddrawdll=LoadLibraryA(path);
 	DDrawCreate=(DDrawCreateProc)GetProcAddress(ddrawdll, "DirectDrawCreate");
 	DDrawEnumerate=(DDrawEnumerateProc)GetProcAddress(ddrawdll, "DirectDrawEnumerateA");
 	DDrawCreateEx=(DDrawCreateExProc)GetProcAddress(ddrawdll, "DirectDrawCreateEx");
