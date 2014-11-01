@@ -153,7 +153,7 @@ void gl_updatescreen()
 LRESULT CALLBACK newwinproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {	
 //	logf("newwinproc %x %x %x %x", hWnd, uMsg, wParam, lParam);
-#define WMDETECT(x) if (uMsg == x) logf("Window message " #x " %x(%d), %x(%d)\n", wParam, lParam);
+#define WMDETECT(x) if (uMsg == x) logf("Window message " #x " %x(%d), %x(%d)\n", wParam, wParam, lParam, lParam);
 	WMDETECT(WM_NULL)
 	WMDETECT(WM_CREATE)
 	WMDETECT(WM_DESTROY)

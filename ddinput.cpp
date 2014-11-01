@@ -31,6 +31,7 @@ static DDrawMiscProc ReleaseLock;
 static DDrawCreateExProc DDrawCreateEx;
 
 static void LoadDLL() {
+#ifdef PASSTHROUGH_WRAPPER
 	char path[MAX_PATH];
 	GetSystemDirectoryA(path,MAX_PATH);
 	strcat_s(path, "\\ddraw.dll");	
@@ -44,6 +45,7 @@ static void LoadDLL() {
 	InternalLock=(DDrawMiscProc)GetProcAddress(ddrawdll, "DDInternalLock");
 	InternalUnlock=(DDrawMiscProc)GetProcAddress(ddrawdll, "DDInternalUnlock");
 	ReleaseLock=(DDrawMiscProc)GetProcAddress(ddrawdll, "ReleaseDDThreadLock");
+#endif
 }
 
 extern "C" void __declspec(naked) myAcquireLock() { 
@@ -69,9 +71,11 @@ extern "C" void __declspec(naked) myReleaseLock() {
 
 extern "C" HRESULT _stdcall myDirectDrawCreate(GUID* a, IDirectDraw** b, IUnknown* c) {
 	logf(__FUNCTION__ "\n");
+#ifdef PASSTHROUGH_WRAPPER
 	if(!DDrawCreate) LoadDLL();
 	HRESULT hr=DDrawCreate(a,b,c);
 	if(FAILED(hr)) return hr;
+#endif
 	pushtab();
 	*b=(IDirectDraw*)new myIDirectDraw(*b);
 	poptab();
@@ -86,17 +90,25 @@ extern "C" HRESULT _stdcall myDirectDrawCreateEx(
 )
 {
 	logf(__FUNCTION__ "\n");
+#ifdef PASSTHROUGH_WRAPPER
 	if(!DDrawCreate) LoadDLL();
 	HRESULT hr = DDrawCreateEx(lpGUID, lplpDD, iid, pUnkOuter);
 	pushtab();
 	genericQueryInterface(iid, lplpDD);
 	poptab();
 	return hr;
+#else
+	return E_FAIL;
+#endif
 }
 
 extern "C" HRESULT _stdcall myDirectDrawEnumerate(void* lpCallback, void* lpContext) {
 	logf(__FUNCTION__ "\n");
+#ifdef PASSTHROUGH_WRAPPER
 	if(!DDrawEnumerate) LoadDLL();
 	return DDrawEnumerate(lpCallback, lpContext);
+#else
+	return E_FAIL;
+#endif
 }
 

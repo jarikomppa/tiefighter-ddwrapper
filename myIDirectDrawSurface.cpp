@@ -28,7 +28,7 @@
 
 myIDirectDrawSurface::myIDirectDrawSurface(IDirectDrawSurface * aOriginal, LPDDSURFACEDESC aSurfacedesc)
 {
-  logf("myIDirectDrawSurface ctor\n");
+  logf("myIDirectDrawSurface ctor %x\n", this);
 
   mOriginal = aOriginal;
 
@@ -85,7 +85,7 @@ myIDirectDrawSurface::~myIDirectDrawSurface()
 	if (this == gBackBuffer) extrabit = " (backbuffer)";
 	if (this == gPrimarySurface) extrabit = " (primary)";
 
-  logf("myIDirectDrawSurface dtor%s\n", extrabit);
+  logf("myIDirectDrawSurface dtor %x %s\n", this, extrabit);
 
   if (this == gBackBuffer)
   {
@@ -133,7 +133,7 @@ ULONG __stdcall myIDirectDrawSurface::Release()
   char *extrabit = "";
   if (this == gPrimarySurface) extrabit = " (Primary)";
   if (this == gBackBuffer) extrabit = " (Backbuffer)";
-  logf("myIDirectDrawSurface::Release(); %s", extrabit);
+  logf("myIDirectDrawSurface::Release(); %x %s", this, extrabit);
 #ifdef PASSTHROUGH_WRAPPER
   ULONG x = mOriginal->Release();
 #else
@@ -145,7 +145,7 @@ ULONG __stdcall myIDirectDrawSurface::Release()
   {
     wrapstore(mOriginal, 0);
     mOriginal = NULL;
-    delete this;
+    //delete this;
   }
   poptab();
   LeaveCriticalSection(&gCS);
@@ -186,7 +186,7 @@ HRESULT __stdcall myIDirectDrawSurface::Blt(LPRECT a, LPDIRECTDRAWSURFACE b, LPR
   char *bbit = "";
   if (b == gPrimarySurface) extrabit = " (Primary)";
   if (b == gBackBuffer) extrabit = " (Backbuffer)";
-  logf("myIDirectDrawSurface::Blt(LPRECT 0x%x, LPDIRECTDRAWSURFACE 0x%x%s, LPRECT 0x%x, DWORD %d, LPDDBLTFX 0x%x); %s\n", a, b, bbit, c, d, e, extrabit);
+  logf("myIDirectDrawSurface::Blt(LPRECT 0x%x, LPDIRECTDRAWSURFACE 0x%x%s, LPRECT 0x%x, DWORD %d, LPDDBLTFX 0x%x); %x%s\n", a, b, bbit, c, d, e, this, extrabit);
   pushtab();
 	if (a && c)
 		logf("myIDDrawSurface1::Blt([%d,%d,%d,%d],%08x,[%d,%d,%d,%d],%d,%08x)",
@@ -262,6 +262,7 @@ HRESULT __stdcall myIDirectDrawSurface::Blt(LPRECT a, LPDIRECTDRAWSURFACE b, LPR
   HRESULT x = mOriginal->Blt(a, (b)?((myIDirectDrawSurface *)b)->mOriginal:0, c, d, e);
 #else
   HRESULT x = 0;
+  /*
   if (d == DDBLT_COLORFILL)
   {
 	  if (this->mSurfaceDesc.ddpfPixelFormat.dwRGBBitCount == 8)
@@ -277,6 +278,7 @@ HRESULT __stdcall myIDirectDrawSurface::Blt(LPRECT a, LPDIRECTDRAWSURFACE b, LPR
 				  surf[i * mPitch/2 + j] = e->dwFillColor;
 	  }
   }
+  */
   if (d == DDBLT_ROP)
   {
 	  // assuming full copy and equal sized surfaces
@@ -364,7 +366,7 @@ HRESULT __stdcall myIDirectDrawSurface::Flip(LPDIRECTDRAWSURFACE a, DWORD b)
   if (a == gPrimarySurface) extrabit = " (Primary)";
   if (a == gBackBuffer) extrabit = " (Backbuffer)";
 
-  logf("myIDirectDrawSurface::Flip(LPDIRECTDRAWSURFACE 0x%x%s, DWORD %d); %s", a, abit, b, extrabit);
+  logf("myIDirectDrawSurface::Flip(LPDIRECTDRAWSURFACE 0x%x%s, DWORD %d); %x%s", a, abit, b, this, extrabit);
 #ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->Flip((a)?((myIDirectDrawSurface *)a)->mOriginal:0, b);
 #else
@@ -384,7 +386,7 @@ HRESULT __stdcall myIDirectDrawSurface::GetAttachedSurface(LPDDSCAPS a, LPDIRECT
   char *extrabit = "";
   if (this == gPrimarySurface) extrabit = " (Primary)";
   if (this == gBackBuffer) extrabit = " (Backbuffer)";
-  logf("myIDirectDrawSurface::GetAttachedSurface(LPDDSCAPS 0x%x, LPDIRECTDRAWSURFACE FAR * 0x%x);%s", a, b, extrabit);
+  logf("myIDirectDrawSurface::GetAttachedSurface(LPDDSCAPS 0x%x, LPDIRECTDRAWSURFACE FAR * 0x%x); %x%s", a, b, this, extrabit);
 #ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->GetAttachedSurface(a, b);
   pushtab();
@@ -552,7 +554,7 @@ HRESULT __stdcall myIDirectDrawSurface::GetSurfaceDesc(LPDDSURFACEDESC a)
   char *extrabit = "";
   if (this == gPrimarySurface) extrabit = " (Primary)";
   if (this == gBackBuffer) extrabit = " (Backbuffer)";
-  logf("myIDirectDrawSurface::GetSurfaceDesc(LPDDSURFACEDESC 0x%x);%s", a, extrabit);
+  logf("myIDirectDrawSurface::GetSurfaceDesc(LPDDSURFACEDESC 0x%x); %x%s", a, this, extrabit);
 #ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->GetSurfaceDesc(a);
   pushtab();
@@ -605,6 +607,7 @@ HRESULT __stdcall myIDirectDrawSurface::GetSurfaceDesc(LPDDSURFACEDESC a)
 
 #else
   HRESULT x = 0;
+  *a = mSurfaceDesc;
 #endif
   logfc(" -> return %d\n", x);
   endbiglog();
@@ -643,7 +646,7 @@ HRESULT __stdcall myIDirectDrawSurface::Lock(LPRECT a, LPDDSURFACEDESC b, DWORD 
   char *extrabit = "";
   if (this == gPrimarySurface) extrabit = " (Primary)";
   if (this == gBackBuffer) extrabit = " (Backbuffer)";
-  logf("myIDirectDrawSurface::Lock(LPRECT 0x%x, LPDDSURFACEDESC 0x%x, DWORD %d, HANDLE); %s\n", a, b, c, extrabit);
+  logf("myIDirectDrawSurface::Lock(LPRECT 0x%x, LPDDSURFACEDESC 0x%x, DWORD %d, HANDLE); %x%s\n", a, b, c, this, extrabit);
   pushtab();
   logf("surfacedesc flags: ");
 #define FLAGGY(x) if ((b->dwFlags & x) == x) logfc(#x " ");
@@ -760,7 +763,7 @@ HRESULT __stdcall myIDirectDrawSurface::SetPalette(LPDIRECTDRAWPALETTE a)
   char *extrabit = "";
   if (this == gPrimarySurface) extrabit = " (Primary)";
   if (this == gBackBuffer) extrabit = " (Backbuffer)";
-  logf("myIDirectDrawSurface::SetPalette(LPDIRECTDRAWPALETTE 0x%x);%s", a, extrabit);
+  logf("myIDirectDrawSurface::SetPalette(LPDIRECTDRAWPALETTE 0x%x); %x%s", a, this, extrabit);
 #ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->SetPalette((a)?((myIDirectDrawPalette *)a)->mOriginal:0);
 #else
@@ -780,7 +783,7 @@ HRESULT __stdcall myIDirectDrawSurface::Unlock(LPVOID a)
   char *extrabit = "";
   if (this == gPrimarySurface) extrabit = " (Primary)";
   if (this == gBackBuffer) extrabit = " (Backbuffer)";
-  logf("myIDirectDrawSurface::Unlock(LPVOID 0x%x);%s", a, extrabit);
+  logf("myIDirectDrawSurface::Unlock(LPVOID 0x%x); %x%s", a, this, extrabit);
 #ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->Unlock(a);
 #else

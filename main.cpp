@@ -186,6 +186,7 @@ int gWrapPairs = 0;
 
 void * do_wrapfetch(void * aOriginal)
 {
+#ifdef PASSTHROUGH_WRAPPER
 	int i;
 	for (i = 0; i < gWrapPairs; i++)
 	{
@@ -194,11 +195,13 @@ void * do_wrapfetch(void * aOriginal)
 			return gWrapPair[i].mWrapper;
 		}
 	}
+#endif
 	return NULL;
 }
 
 void wrapstore(void * aOriginal, void * aWrapper)
 {
+#ifdef PASSTHROUGH_WRAPPER
 	if (do_wrapfetch(aOriginal) == NULL)
 	{
 		gWrapPair[gWrapPairs].mOriginal = aOriginal;
@@ -222,7 +225,9 @@ void wrapstore(void * aOriginal, void * aWrapper)
 	{
 		logf("**** Max number of wrappers exceeded - adjust and recompile\n");
 	}
+#endif
 }
+
 
 void * wrapfetch(void * aOriginal)
 {
