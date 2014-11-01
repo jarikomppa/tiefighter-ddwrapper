@@ -121,12 +121,12 @@ HRESULT __stdcall myIDirectDrawPalette::Initialize(LPDIRECTDRAW a, DWORD b, LPPA
   return x;
 }
 
-HRESULT __stdcall myIDirectDrawPalette::SetEntries(DWORD a, DWORD b, DWORD c, LPPALETTEENTRY d)
+HRESULT __stdcall myIDirectDrawPalette::SetEntries(DWORD aFlags,DWORD aStartEntry,DWORD aCount,LPPALETTEENTRY aPalEntries)
 {
   EnterCriticalSection(&gCS);
-  logf("myIDirectDrawPalette::SetEntries(DWORD %d, DWORD %d, DWORD %d, LPPALETTEENTRY 0x%x);", a, b, c, d);
+  logf("myIDirectDrawPalette::SetEntries(DWORD %d, DWORD %d, DWORD %d, LPPALETTEENTRY 0x%x);", aFlags, aStartEntry, aCount, aPalEntries);
 #ifdef PASSTHROUGH_WRAPPER
-  HRESULT x = mOriginal->SetEntries(a, b, c, d);
+  HRESULT x = mOriginal->SetEntries(aFlags, aStartEntry, aCount, aPalEntries);
 #else
   HRESULT x = 0;
   memcpy(mPal + aStartEntry, aPalEntries, aCount * sizeof(PALETTEENTRY));

@@ -22,18 +22,40 @@ myIDirectDrawSurface *gPrimarySurface = NULL, *gBackBuffer = NULL;
 void gl_updatescreen()
 {
 	int i, j;
-	static int x = 0; x++;
+	int tex_w = 1024;
+	int tex_h = 512;
 
-	for (i = 0; i < 480; i++)
-		for (j = 0; j < 640; j++)
-			gTemp[j + i * 640] = i+j+x;
+	if (gScreenWidth > 320)
+	{
+		tex_w *= 2;
+		tex_h *= 2;
+	}
 
-	for (i = 0; i < 480*2; i++)
-		for (j = 0; j < 640*2; j++)
-			gTexData[j + i * 640*2] = gTemp[j/2 + (i/2) * 640];
+	if (gScreenBits == 8)
+	{
+		if (gPrimarySurface->mCurrentPalette)
+		{
+			for (i = 0; i < gScreenHeight; i++)
+			{
+				for (j = 0; j < gScreenWidth; j++)
+				{
+					int pix = gPrimarySurface->mSurfaceData[j + i * gScreenWidth];
+					gTemp[j + i * gScreenWidth] = *(int*)&(gPrimarySurface->mCurrentPalette->mPal[pix]);
+				}
+			}
+		}
+	}
+	/*
+	tex_w/=2;
+	tex_h/=2;
+	for (i = 0; i < gScreenHeight; i++)
+		for (j = 0; j < gScreenWidth; j++)
+			gTexData[j + i * tex_w] = gTemp[j + i * gScreenWidth];
+*/
+	for (i = 0; i < gScreenHeight * 2; i++)
+		for (j = 0; j < gScreenWidth * 2; j++)
+			gTexData[j + i * tex_w] = gTemp[j/2 + (i/2) * gScreenWidth];
 
-	int tex_w = 2048;
-	int tex_h = 1024;
     // upload texture
     glTexImage2D(GL_TEXTURE_2D,    // target
                  0,                // level
@@ -48,9 +70,11 @@ void gl_updatescreen()
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 
+	glShadeModel(GL_SMOOTH);
+
     glEnable(GL_TEXTURE_2D);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0);
-	glViewport(0,0,gRealScreenWidth,gRealScreenHeight);
+	glViewport(0, 0, gRealScreenWidth, gRealScreenHeight);
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -58,11 +82,11 @@ void gl_updatescreen()
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	float u = (float)gScreenWidth / (float)tex_w;
-    float v = (float)gScreenHeight / (float)tex_h;
+	float u = ((float)gScreenWidth*2) / (float)tex_w;
+    float v = ((float)gScreenHeight*2) / (float)tex_h;
 
     float w = 1, h = 1;
-	float aspect = 4.0f / 3.0f;
+	float aspect = (float)gScreenWidth / (float)gScreenHeight;
 
     w = (gRealScreenHeight * aspect) / gRealScreenWidth;
     h = (gRealScreenWidth * (1 / aspect)) / gRealScreenHeight;
@@ -160,7 +184,7 @@ void gl_setvideomode(int w, int h, int bits)
 {
 	gAllowResize = 1;
 	// Go full screen..
-	MoveWindow(gHwnd, 0, 0, gRealScreenWidth/2, gRealScreenHeight/2, 0);
+	MoveWindow(gHwnd, 0, 0, gRealScreenWidth, gRealScreenHeight, 0);
 	// Set position just in case..
 	//SetWindowPos(gHwnd, NULL, 0, 0, 0, 0, SWP_NOSIZE);
 	gAllowResize = 0;
@@ -197,13 +221,17 @@ void gl_init(HWND aHwnd)
 	{
 		r = mon.rcMonitor;
 	}
-
+	
 	gRealScreenWidth = r.right;
 	gRealScreenHeight = r.bottom;
+	/*
+	gRealScreenWidth /= 2;
+	gRealScreenHeight /= 2;
+	*/
 
 	gAllowResize = 1;
 	// Go full screen..
-	MoveWindow(gHwnd, 640, 0, gRealScreenWidth/2, gRealScreenHeight/2, 0);
+	MoveWindow(gHwnd, 640, 0, gRealScreenWidth, gRealScreenHeight, 0);
 	// Set position just in case..
 	//SetWindowPos(gHwnd, NULL, 0, 0, 0, 0, SWP_NOSIZE);
 	gAllowResize = 0;

@@ -122,10 +122,6 @@ HRESULT __stdcall myIDirectDraw::CreatePalette(DWORD a, LPPALETTEENTRY b, LPDIRE
   logf("myIDirectDraw::CreatePalette(DWORD %d, LPPALETTEENTRY 0x%x, LPDIRECTDRAWPALETTE FAR * 0x%x, IUnknown FAR *);", a, b, c);
 #ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->CreatePalette(a, b, c, d);
-#else
-  HRESULT x = 0;
-#endif
-  logfc(" -> return %d\n", x);
   pushtab();
   myIDirectDrawPalette * n = (myIDirectDrawPalette *)wrapfetch(*c);
   if (n == NULL && *c != NULL)
@@ -136,7 +132,15 @@ HRESULT __stdcall myIDirectDraw::CreatePalette(DWORD a, LPPALETTEENTRY b, LPDIRE
   }
   *c = n;
   poptab();
+#else
+  HRESULT x = 0;
+  pushtab();
+  logfc("\n");
+  *c = (myIDirectDrawPalette *)new myIDirectDrawPalette(*c, a, b);
+  poptab();
+#endif
   LeaveCriticalSection(&gCS);
+  logfc(" -> return %d\n", x);
   return x;
 }
 
@@ -150,10 +154,6 @@ HRESULT __stdcall myIDirectDraw::CreateSurface(LPDDSURFACEDESC a, LPDIRECTDRAWSU
     logfc("\n");
     loghexdump(sizeof(DDSURFACEDESC), a);
   poptab();
-#else
-  HRESULT x = 0;
-#endif
-  logfc(" -> return %d\n", x);
   pushtab();
   IDirectDrawSurface * n = (IDirectDrawSurface *)wrapfetch(*b);
   if (n == NULL && *b != NULL)
@@ -164,7 +164,15 @@ HRESULT __stdcall myIDirectDraw::CreateSurface(LPDDSURFACEDESC a, LPDIRECTDRAWSU
   }
   *b = n;
   poptab();
+#else
+  pushtab();
+  logfc("\n");
+  *b = (IDirectDrawSurface *)new myIDirectDrawSurface(*b, a);
+  poptab();
+  HRESULT x = 0;
+#endif
   LeaveCriticalSection(&gCS);
+  logfc(" -> return %d\n", x);
   return x;
 }
 
@@ -263,14 +271,15 @@ static unsigned char mycaps[] = {
 HRESULT __stdcall myIDirectDraw::GetCaps(LPDDCAPS a, LPDDCAPS b)
 {
   EnterCriticalSection(&gCS);
+  startbiglog();
   logf("myIDirectDraw::GetCaps(LPDDCAPS 0x%x, LPDDCAPS 0x%x);", a, b);
-#ifdef PASSTHROUGH_WRAPPER
+#ifdef PASSTHROUGH_WRAPPER  
   HRESULT x = mOriginal->GetCaps(a, b);
   pushtab();
     logfc("\n");
     loghexdump(sizeof(DDCAPS), a);
   poptab();
-/*
+
   pushtab();
 	logf("dwSize = %d\n", a->dwSize);
 	logf("dwCaps = %d\n", a->dwCaps);
@@ -309,7 +318,7 @@ HRESULT __stdcall myIDirectDraw::GetCaps(LPDDCAPS a, LPDDCAPS b)
 	logf("dwReserved2 = %d\n", a->dwReserved2);
 	logf("dwReserved3 = %d\n", a->dwReserved3);
 	poptab();
-*/
+
 #else
   HRESULT x = 0;
   if (a)
@@ -318,8 +327,7 @@ HRESULT __stdcall myIDirectDraw::GetCaps(LPDDCAPS a, LPDDCAPS b)
   }
 #endif
   logfc(" -> return %d\n", x);
-  pushtab();
-  poptab();
+  endbiglog();	
   LeaveCriticalSection(&gCS);
   return x;
 }

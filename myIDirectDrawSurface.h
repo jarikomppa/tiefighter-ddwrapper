@@ -24,7 +24,7 @@
 // distribution.
 
 #pragma once
-class myIDDrawPalette;
+class myIDirectDrawPalette;
 
 class myIDirectDrawSurface : public IDirectDrawSurface
 {
@@ -71,7 +71,7 @@ public:
 
   IDirectDrawSurface * mOriginal;
   DDSURFACEDESC mSurfaceDesc;
-  myIDDrawPalette *mCurrentPalette;
+  myIDirectDrawPalette *mCurrentPalette;
   unsigned char * mSurfaceData;
   unsigned char * mRealSurfaceData;
   int mWidth;
