@@ -114,7 +114,7 @@ HRESULT __stdcall myIDirectDraw7::CreateClipper(DWORD a, LPDIRECTDRAWCLIPPER FAR
 
 HRESULT __stdcall myIDirectDraw7::CreatePalette(DWORD a, LPPALETTEENTRY b, LPDIRECTDRAWPALETTE FAR * c, IUnknown FAR * d)
 {
-  EnterCriticalSection(&gCS);
+	EnterCriticalSection(&gCS);
   logf("myIDirectDraw7::CreatePalette(DWORD %d, LPPALETTEENTRY 0x%x, LPDIRECTDRAWPALETTE FAR * 0x%x, IUnknown FAR *);", a, b, c);
   HRESULT x = mOriginal->CreatePalette(a, b, c, d);
   logfc(" -> return %d\n", x);
@@ -122,7 +122,7 @@ HRESULT __stdcall myIDirectDraw7::CreatePalette(DWORD a, LPPALETTEENTRY b, LPDIR
   myIDirectDrawPalette * n = (myIDirectDrawPalette *)wrapfetch(*c);
   if (n == NULL && *c != NULL)
   {
-    n = (myIDirectDrawPalette *)new myIDirectDrawPalette(*c);
+    n = (myIDirectDrawPalette *)new myIDirectDrawPalette(*c, a, b);
     wrapstore(n, *c);
     logf("Wrapped.\n");
   }

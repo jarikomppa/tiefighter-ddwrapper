@@ -26,10 +26,11 @@
 #include "wrapper.h"
 #include "myIDirectDrawPalette.h"
 
-myIDirectDrawPalette::myIDirectDrawPalette(IDirectDrawPalette * aOriginal)
+myIDirectDrawPalette::myIDirectDrawPalette(IDirectDrawPalette * aOriginal, DWORD aFlags, LPPALETTEENTRY aPalette)
 {
   logf("myIDirectDrawPalette ctor\n");
   mOriginal = aOriginal;
+  memcpy(mPal, aPalette, sizeof(PALETTEENTRY) * 256);
 }
 
 myIDirectDrawPalette::~myIDirectDrawPalette()
@@ -128,6 +129,7 @@ HRESULT __stdcall myIDirectDrawPalette::SetEntries(DWORD a, DWORD b, DWORD c, LP
   HRESULT x = mOriginal->SetEntries(a, b, c, d);
 #else
   HRESULT x = 0;
+  memcpy(mPal + aStartEntry, aPalEntries, aCount * sizeof(PALETTEENTRY));
 #endif
   logfc(" -> return %d\n", x);
   pushtab();

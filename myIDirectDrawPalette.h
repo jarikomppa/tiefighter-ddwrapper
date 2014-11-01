@@ -28,7 +28,7 @@
 class myIDirectDrawPalette : public IDirectDrawPalette
 {
 public:
-  myIDirectDrawPalette(IDirectDrawPalette * aOriginal);
+  myIDirectDrawPalette(IDirectDrawPalette * aOriginal, DWORD aFlags, LPPALETTEENTRY aPalette);
   ~myIDirectDrawPalette();
 
   HRESULT __stdcall QueryInterface(REFIID riid, LPVOID FAR * ppvObj);
@@ -40,5 +40,7 @@ public:
   HRESULT __stdcall SetEntries(DWORD a, DWORD b, DWORD c, LPPALETTEENTRY d);
 
   IDirectDrawPalette * mOriginal;
+	PALETTEENTRY mPal[256];
+
 };
 

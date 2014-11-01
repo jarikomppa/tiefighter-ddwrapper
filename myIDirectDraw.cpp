@@ -130,7 +130,7 @@ HRESULT __stdcall myIDirectDraw::CreatePalette(DWORD a, LPPALETTEENTRY b, LPDIRE
   myIDirectDrawPalette * n = (myIDirectDrawPalette *)wrapfetch(*c);
   if (n == NULL && *c != NULL)
   {
-    n = (myIDirectDrawPalette *)new myIDirectDrawPalette(*c);
+    n = (myIDirectDrawPalette *)new myIDirectDrawPalette(*c, a, b);
     wrapstore(n, *c);
     logf("Wrapped.\n");
   }

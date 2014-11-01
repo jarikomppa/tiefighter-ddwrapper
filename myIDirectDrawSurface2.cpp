@@ -302,7 +302,8 @@ HRESULT __stdcall myIDirectDrawSurface2::GetOverlayPosition(LPLONG a, LPLONG b)
 
 HRESULT __stdcall myIDirectDrawSurface2::GetPalette(LPDIRECTDRAWPALETTE FAR * a)
 {
-  EnterCriticalSection(&gCS);
+	/*
+	EnterCriticalSection(&gCS);
   logf("myIDirectDrawSurface2::GetPalette(LPDIRECTDRAWPALETTE FAR * 0x%x);", a);
   HRESULT x = mOriginal->GetPalette(a);
   logfc(" -> return %d\n", x);
@@ -318,6 +319,9 @@ HRESULT __stdcall myIDirectDrawSurface2::GetPalette(LPDIRECTDRAWPALETTE FAR * a)
   poptab();
   LeaveCriticalSection(&gCS);
   return x;
+  */
+	UNDEFINED_(E_FAIL);
+
 }
 
 HRESULT __stdcall myIDirectDrawSurface2::GetPixelFormat(LPDDPIXELFORMAT a)

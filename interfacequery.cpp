@@ -51,7 +51,7 @@ void genericQueryInterface(REFIID a, void **ptr)
 	QUERYINTERFACE(IDirectDrawColorControl);
 	QUERYINTERFACE(IDirectDrawFactory);
 	QUERYINTERFACE(IDirectDrawGammaControl);
-	QUERYINTERFACE(IDirectDrawPalette);
+//	QUERYINTERFACE(IDirectDrawPalette); // needs additional ctor parameters
 	//QUERYINTERFACE(IDirectDrawSurface); // needs additional ctor parameter
 	QUERYINTERFACE(IDirectDrawSurface2);
 	QUERYINTERFACE(IDirectDrawSurface3);
