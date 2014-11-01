@@ -489,38 +489,63 @@ HRESULT __stdcall myIDirectDrawSurface::GetPixelFormat(LPDDPIXELFORMAT a)
 HRESULT __stdcall myIDirectDrawSurface::GetSurfaceDesc(LPDDSURFACEDESC a)
 {
   EnterCriticalSection(&gCS);
+  startbiglog();
   logf("myIDirectDrawSurface::GetSurfaceDesc(LPDDSURFACEDESC 0x%x);", a);
 #ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->GetSurfaceDesc(a);
   pushtab();
     logfc("\n");
     loghexdump(sizeof(DDSURFACEDESC), a);
-	/*
-	logf("dwSize = %d\n", a->dwSize);
-	logf("dwFlags = %d\n", a->dwFlags);
-	logf("dwHeight = %d\n", a->dwHeight);
-	logf("dwWidth = %d\n", a->dwWidth);
-	logf("dwLinearSize = %d\n", a->dwLinearSize);
-	logf("dwBackBufferCount = %d\n",a->dwBackBufferCount);
-	logf("dwRefreshRate = %d\n", a->dwRefreshRate);
-	logf("dwAlphaBitDepth = %d\n", a->dwAlphaBitDepth);
-	logf("dwReserved = %d\n", a->dwReserved);
-	logf("lpSurface = %d\n", a->lpSurface);
-//	logf("ddckCKDestOverlay = %d\n",ddckCKDestOverlay);
-//	logf("ddckCKDestBlt = %d\n", ddckCKDestBlt);
-//	logf("ddckCKSrcOverlay = %d\n", ddckCKSrcOverlay);
-//	logf("ddckCKSrcBlt = %d\n", ddckCKSrcBlt);
+	
+	logf("dwSize = %x (%d)\n", a->dwSize, a->dwSize);
+	logf("dwFlags = %x (%d)", a->dwFlags, a->dwFlags);
+#define FLAGGY(x) if ((a->dwFlags & x) == x) logfc(#x " ");
+	FLAGGY(DDSD_ALL)
+	FLAGGY(DDSD_ALPHABITDEPTH) 
+	FLAGGY(DDSD_BACKBUFFERCOUNT)
+	FLAGGY(DDSD_CAPS)
+	FLAGGY(DDSD_CKDESTBLT)
+	FLAGGY(DDSD_CKDESTOVERLAY)
+	FLAGGY(DDSD_CKSRCBLT)
+	FLAGGY(DDSD_CKSRCOVERLAY)
+	FLAGGY(DDSD_HEIGHT)
+	FLAGGY(DDSD_LINEARSIZE)
+	FLAGGY(DDSD_LPSURFACE)
+	FLAGGY(DDSD_MIPMAPCOUNT)
+	FLAGGY(DDSD_PITCH)
+	FLAGGY(DDSD_PIXELFORMAT)
+	FLAGGY(DDSD_REFRESHRATE)
+	FLAGGY(DDSD_TEXTURESTAGE)
+	FLAGGY(DDSD_WIDTH)
+	FLAGGY(DDSD_ZBUFFERBITDEPTH)
+#undef FLAGGY
+	logfc("\n");
+	logf("dwHeight = %x (%d)\n", a->dwHeight, a->dwHeight);
+	logf("dwWidth = %x (%d)\n", a->dwWidth, a->dwWidth);
+	logf("dwLinearSize = %x (%d)\n", a->dwLinearSize, a->dwLinearSize);
+	logf("dwBackBufferCount = %x (%d)\n",a->dwBackBufferCount,a->dwBackBufferCount);
+	logf("dwRefreshRate = %x (%d)\n", a->dwRefreshRate, a->dwRefreshRate);
+	logf("dwAlphaBitDepth = %x (%d)\n", a->dwAlphaBitDepth, a->dwAlphaBitDepth);
+	logf("dwReserved = %x (%d)\n", a->dwReserved, a->dwReserved);
+	logf("lpSurface = %x (%d)\n", a->lpSurface, a->lpSurface);
+	logf("ddsCaps.dwCaps = %x (%d)\n", a->ddsCaps.dwCaps, a->ddsCaps.dwCaps);
+	logf("ddpfPixelFormat.dwSize = %x (%d)\n", a->ddpfPixelFormat.dwSize, a->ddpfPixelFormat.dwSize);
+	logf("ddpfPixelFormat.dwFlags = %x (%d)\n", a->ddpfPixelFormat.dwFlags, a->ddpfPixelFormat.dwFlags);
+	logf("ddpfPixelFormat.dwFourCC = %x (%d)\n", a->ddpfPixelFormat.dwFourCC, a->ddpfPixelFormat.dwFourCC);
+	logf("ddpfPixelFormat.dwRGBBitCount = %x (%d)\n", a->ddpfPixelFormat.dwRGBBitCount, a->ddpfPixelFormat.dwRGBBitCount);
+	logf("ddpfPixelFormat.dwRBitMask = %x (%d)\n", a->ddpfPixelFormat.dwRBitMask, a->ddpfPixelFormat.dwRBitMask);
+	logf("ddpfPixelFormat.dwGBitMask = %x (%d)\n", a->ddpfPixelFormat.dwGBitMask, a->ddpfPixelFormat.dwGBitMask);
+	logf("ddpfPixelFormat.dwBBitMask = %x (%d)\n", a->ddpfPixelFormat.dwBBitMask, a->ddpfPixelFormat.dwBBitMask);
+	logf("ddpfPixelFormat.dwRGBAlphaBitMask = %x (%d)\n", a->ddpfPixelFormat.dwRGBAlphaBitMask, a->ddpfPixelFormat.dwRGBAlphaBitMask);
 //	logf("ddpfPixelFormat = %d\n", ddpfPixelFormat);
-//	logf("ddsCaps = %d\n", ddsCaps);
-*/
+
   poptab();
 
 #else
   HRESULT x = 0;
 #endif
   logfc(" -> return %d\n", x);
-  pushtab();
-  poptab();
+  endbiglog();
   LeaveCriticalSection(&gCS);
   return x;
 }
@@ -552,11 +577,33 @@ HRESULT __stdcall myIDirectDrawSurface::IsLost()
 HRESULT __stdcall myIDirectDrawSurface::Lock(LPRECT a, LPDDSURFACEDESC b, DWORD c, HANDLE d)
 {
   EnterCriticalSection(&gCS);
+  startbiglog();
   logf("myIDirectDrawSurface::Lock(LPRECT 0x%x, LPDDSURFACEDESC 0x%x, DWORD %d, HANDLE);", a, b, c);
+  logf("surfacedesc flags: ");
+#define FLAGGY(x) if ((b->dwFlags & x) == x) logfc(#x " ");
+	FLAGGY(DDSD_ALL)
+	FLAGGY(DDSD_ALPHABITDEPTH) 
+	FLAGGY(DDSD_BACKBUFFERCOUNT)
+	FLAGGY(DDSD_CAPS)
+	FLAGGY(DDSD_CKDESTBLT)
+	FLAGGY(DDSD_CKDESTOVERLAY)
+	FLAGGY(DDSD_CKSRCBLT)
+	FLAGGY(DDSD_CKSRCOVERLAY)
+	FLAGGY(DDSD_HEIGHT)
+	FLAGGY(DDSD_LINEARSIZE)
+	FLAGGY(DDSD_LPSURFACE)
+	FLAGGY(DDSD_MIPMAPCOUNT)
+	FLAGGY(DDSD_PITCH)
+	FLAGGY(DDSD_PIXELFORMAT)
+	FLAGGY(DDSD_REFRESHRATE)
+	FLAGGY(DDSD_TEXTURESTAGE)
+	FLAGGY(DDSD_WIDTH)
+	FLAGGY(DDSD_ZBUFFERBITDEPTH)
+	logfc("\n");
+#undef FLAGGY
 #ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->Lock(a, b, c, d);
   pushtab();
-    logfc("\n");
     loghexdump(sizeof(DDSURFACEDESC), b);
   poptab();
 
@@ -566,6 +613,7 @@ HRESULT __stdcall myIDirectDrawSurface::Lock(LPRECT a, LPDDSURFACEDESC b, DWORD 
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
+  endbiglog();
   LeaveCriticalSection(&gCS);
   return x;
 }
