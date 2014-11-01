@@ -52,7 +52,7 @@ void genericQueryInterface(REFIID a, void **ptr)
 	QUERYINTERFACE(IDirectDrawFactory);
 	QUERYINTERFACE(IDirectDrawGammaControl);
 	QUERYINTERFACE(IDirectDrawPalette);
-	QUERYINTERFACE(IDirectDrawSurface);
+	//QUERYINTERFACE(IDirectDrawSurface); // needs additional ctor parameter
 	QUERYINTERFACE(IDirectDrawSurface2);
 	QUERYINTERFACE(IDirectDrawSurface3);
 	QUERYINTERFACE(IDirectDrawSurface4);

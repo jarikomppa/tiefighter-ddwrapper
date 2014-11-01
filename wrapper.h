@@ -5,6 +5,7 @@
 #include "ddraw.h"
 #include "ddrawex.h"
 #include "d3d.h"
+#include "gloutput.h"
 
 #include "myIDirect3D.h"
 #include "myIDirect3D2.h"
@@ -46,6 +47,10 @@ extern CRITICAL_SECTION gCS;
 
 void logf(char * format, ...);
 void logfc(char * format, ...);
+void loghexdump(int size, void * data);
+void startbiglog();
+void endbiglog();
+
 void genericQueryInterface(REFIID riid, LPVOID * ppvObj);
 void wrapstore(void * aOriginal, void * aWrapper);
 void *wrapfetch(void * aOriginal);
@@ -61,6 +66,8 @@ void poptab();
 
 #define STRINGIFY(x) STRINGIFY_INNER(x)
 #define STRINGIFY_INNER(x) #x
+
+#define PASSTHROUGH_WRAPPER
 
 //#define WARNMODE_NONE
 //#define WARNMODE_MESSAGE

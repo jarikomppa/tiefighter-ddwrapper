@@ -7,7 +7,6 @@
 #include <windows.h>
 #include <ddraw.h>
 #include "d3d.h"
-#include "ddoutput.h"
 #include "wrapper.h"
 
 #ifdef _DEBUG

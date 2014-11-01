@@ -26,15 +26,71 @@
 #include "wrapper.h"
 #include "myIDirectDrawSurface.h"
 
-myIDirectDrawSurface::myIDirectDrawSurface(IDirectDrawSurface * aOriginal)
+myIDirectDrawSurface::myIDirectDrawSurface(IDirectDrawSurface * aOriginal, LPDDSURFACEDESC aSurfacedesc)
 {
   logf("myIDirectDrawSurface ctor\n");
+
   mOriginal = aOriginal;
+
+  mSurfaceData = NULL;
+  mRealSurfaceData = NULL;
+  mCurrentPalette = NULL;
+  mWidth = 0;
+  mHeight = 0;
+  mPitch = 0;
+
+  if (aSurfacedesc == NULL)
+  {
+	  //UNDEFINED_void  
+	  return;
+  }
+
+
+	mWidth = gScreenWidth;
+	mHeight = gScreenHeight;
+	mSurfaceDesc = *aSurfacedesc;
+
+	if (aSurfacedesc->dwFlags & DDSD_WIDTH) mWidth = aSurfacedesc->dwWidth;
+	if (aSurfacedesc->dwFlags & DDSD_HEIGHT) mHeight = aSurfacedesc->dwHeight;
+	// we don't need no stinking extra pitch bytes..
+	mPitch = mWidth * gScreenBits / 8;
+	
+	// ..unless you insist
+	if (aSurfacedesc->dwFlags & DDSD_PITCH) mPitch = aSurfacedesc->lPitch; 
+
+	if (aSurfacedesc->dwFlags & DDSD_CAPS)
+	{
+		if (aSurfacedesc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+		{
+			gPrimarySurface = this;			
+		}
+	}
+
+	mSurfaceDesc.dwWidth = mWidth;
+	mSurfaceDesc.dwHeight = mHeight;
+	mSurfaceDesc.lPitch = mPitch;
+	mSurfaceDesc.dwFlags |= DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH;
+
+	// Let's pad the framebuffer by a couple of megs, in case
+	// the app writes outside bounds..
+	// (we have enough trouble being stable as it is)
+	mRealSurfaceData = new unsigned char[mHeight * mPitch + 2 * 1024 * 1024];
+	mSurfaceData = mRealSurfaceData + 1024 * 1024 * 1;
+	memset(mSurfaceData, 0, mHeight * mPitch);
 }
 
 myIDirectDrawSurface::~myIDirectDrawSurface()
 {
   logf("myIDirectDrawSurface dtor\n");
+
+  if (this == gPrimarySurface)
+	{
+		gPrimarySurface = NULL;
+		delete gBackBuffer;
+		gBackBuffer = NULL;
+	}
+	delete[] mRealSurfaceData;
+
 }
 
 HRESULT __stdcall myIDirectDrawSurface::QueryInterface(REFIID riid, LPVOID FAR * ppvObj)
@@ -66,7 +122,11 @@ ULONG __stdcall myIDirectDrawSurface::Release()
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDrawSurface::Release();");
+#ifdef PASSTHROUGH_WRAPPER
   ULONG x = mOriginal->Release();
+#else
+  ULONG x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   if (x == 0)
@@ -107,11 +167,88 @@ HRESULT __stdcall myIDirectDrawSurface::AddOverlayDirtyRect(LPRECT a)
 HRESULT __stdcall myIDirectDrawSurface::Blt(LPRECT a, LPDIRECTDRAWSURFACE b, LPRECT c, DWORD d, LPDDBLTFX e)
 {
   EnterCriticalSection(&gCS);
-  logf("myIDirectDrawSurface::Blt(LPRECT 0x%x, LPDIRECTDRAWSURFACE 0x%x, LPRECT 0x%x, DWORD %d, LPDDBLTFX 0x%x);", a, b, c, d, e);
+  startbiglog();
+  logf("myIDirectDrawSurface::Blt(LPRECT 0x%x, LPDIRECTDRAWSURFACE 0x%x, LPRECT 0x%x, DWORD %d, LPDDBLTFX 0x%x);\n", a, b, c, d, e);
+  pushtab();
+	if (a && c)
+		logf("myIDDrawSurface1::Blt([%d,%d,%d,%d],%08x,[%d,%d,%d,%d],%d,%08x)",
+			a->top,a->left,a->bottom,a->right,
+			b,
+			c->top,c->left,c->bottom,c->right,
+			d,
+			e);
+	else
+	if (a)
+		logf("myIDDrawSurface1::Blt([%d,%d,%d,%d],%08x,[null],%d,%08x)",
+			a->top,a->left,a->bottom,a->right,
+			b,
+			d,
+			e);
+	else
+	if (c)
+		logf("myIDDrawSurface1::Blt([null],%08x,[%d,%d,%d,%d],%d,%08x)",
+			b,
+			c->top,c->left,c->bottom,c->right,
+			d,
+			e);
+	else
+		logf("myIDDrawSurface1::Blt([null],%08x,[null],%d,%08x)",
+			b,
+			d,
+			e);
+
+	logfc("\n");
+	logf("Flags: ");
+	if (d & DDBLT_COLORFILL) logfc("DDBLT_COLORFILL ");
+	if (d & DDBLT_DDFX) logfc("DDBLT_DDFX ");
+	if (d & DDBLT_DDROPS) logfc("DDBLT_DDROPS ");
+	if (d & DDBLT_DEPTHFILL) logfc("DDBLT_DEPTHFILL ");
+	if (d & DDBLT_KEYDESTOVERRIDE) logfc("DDBLT_KEYDESTOVERRIDE ");
+	if (d & DDBLT_KEYSRCOVERRIDE) logfc("DDBLT_KEYSRCOVERRIDE ");
+	if (d & DDBLT_ROP) logfc("DDBLT_ROP ");
+	if (d & DDBLT_ROTATIONANGLE) logfc("DDBLT_ROTATIONANGLE ");
+	if (d & DDBLT_KEYDEST) logfc("DDBLT_KEYDEST ");
+	if (d & DDBLT_KEYSRC) logfc("DDBLT_KEYSRC ");
+	if (d & DDBLT_ASYNC) logfc("DDBLT_ASYNC ");
+	if (d & DDBLT_DONOTWAIT) logfc("DDBLT_DONOTWAIT ");
+	if (d & DDBLT_WAIT) logfc("DDBLT_WAIT ");
+	logfc("\n");
+	if (e)
+	{
+		logf("dwSize = %x (%d)\n", e->dwSize, e->dwSize);
+		logf("dwDDFX = %x (%d)\n", e->dwDDFX, e->dwDDFX);
+		logf("dwROP = %x (%d)\n", e->dwROP, e->dwROP);
+		logf("dwDDROP = %x (%d)\n", e->dwDDROP, e->dwDDROP);
+		logf("dwRotationAngle = %x (%d)\n", e->dwRotationAngle, e->dwRotationAngle);
+		logf("dwZBufferOpCode = %x (%d)\n", e->dwZBufferOpCode, e->dwZBufferOpCode);
+		logf("dwZBufferLow = %x (%d)\n", e->dwZBufferLow, e->dwZBufferLow);
+		logf("dwZBufferHigh = %x (%d)\n", e->dwZBufferHigh, e->dwZBufferHigh);
+		logf("dwZBufferBaseDest = %x (%d)\n", e->dwZBufferBaseDest, e->dwZBufferBaseDest);
+		logf("dwZDestConstBitDepth = %x (%d)\n", e->dwZDestConstBitDepth, e->dwZDestConstBitDepth);
+		logf("lpDDSZBufferDest = %x (%d)\n", e->lpDDSZBufferDest, e->lpDDSZBufferDest);
+		logf("dwZSrcConstBitDepth = %x (%d)\n", e->dwZSrcConstBitDepth, e->dwZSrcConstBitDepth);
+		logf("lpDDSZBufferSrc = %x (%d)\n", e->lpDDSZBufferSrc, e->lpDDSZBufferSrc);
+		logf("dwAlphaEdgeBlendBitDepth = %x (%d)\n", e->dwAlphaEdgeBlendBitDepth, e->dwAlphaEdgeBlendBitDepth);
+		logf("dwAlphaEdgeBlend = %x (%d)\n", e->dwAlphaEdgeBlend, e->dwAlphaEdgeBlend);
+		logf("dwReserved = %x (%d)\n", e->dwReserved, e->dwReserved);
+		logf("dwAlphaDestConstBitDepth = %x (%d)\n", e->dwAlphaDestConstBitDepth, e->dwAlphaDestConstBitDepth);
+		logf("lpDDSAlphaDest = %x (%d)\n", e->lpDDSAlphaDest, e->lpDDSAlphaDest);
+		logf("dwAlphaSrcConstBitDepth = %x (%d)\n", e->dwAlphaSrcConstBitDepth, e->dwAlphaSrcConstBitDepth);
+		logf("lpDDSAlphaSrc = %x (%d)\n", e->lpDDSAlphaSrc, e->lpDDSAlphaSrc);
+		logf("dwFillColor = %x (%d)\n", e->dwFillColor, e->dwFillColor);
+		logf("ddckDestColorkey = %x (%d)\n", e->ddckDestColorkey, e->ddckDestColorkey);
+		logf("ddckSrcColorkey = %x (%d)\n", e->ddckSrcColorkey, e->ddckSrcColorkey);
+	}
+ poptab();
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->Blt(a, (b)?((myIDirectDrawSurface *)b)->mOriginal:0, c, d, e);
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
+  endbiglog();
   LeaveCriticalSection(&gCS);
   return x;
 }
@@ -180,7 +317,11 @@ HRESULT __stdcall myIDirectDrawSurface::Flip(LPDIRECTDRAWSURFACE a, DWORD b)
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDrawSurface::Flip(LPDIRECTDRAWSURFACE 0x%x, DWORD %d);", a, b);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->Flip((a)?((myIDirectDrawSurface *)a)->mOriginal:0, b);
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
@@ -192,18 +333,31 @@ HRESULT __stdcall myIDirectDrawSurface::GetAttachedSurface(LPDDSCAPS a, LPDIRECT
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDrawSurface::GetAttachedSurface(LPDDSCAPS 0x%x, LPDIRECTDRAWSURFACE FAR * 0x%x);", a, b);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->GetAttachedSurface(a, b);
   logfc(" -> return %d\n", x);
   pushtab();
   myIDirectDrawSurface * n = (myIDirectDrawSurface *)wrapfetch(*b);
   if (n == NULL && *b != NULL)
   {
-    n = (myIDirectDrawSurface *)new myIDirectDrawSurface(*b);
+    n = (myIDirectDrawSurface *)new myIDirectDrawSurface(*b, NULL);
     wrapstore(n, *b);
     logf("Wrapped.\n");
   }
   *b = n;
   poptab();
+#else
+  HRESULT x = 0;
+  if (!gBackBuffer)
+  {
+	  DDSURFACEDESC bbdesc = mSurfaceDesc;
+	  newdesc.ddsCaps.dwCaps |= a->dwCaps;	
+	  newdesc.ddsCaps.dwCaps &= ~DDSCAPS_PRIMARYSURFACE;
+	  gBackBuffer = new myIDirectDrawSurface(NULL, &bbdesc);
+	  gBackBuffer->mSurfaceData = mSurfaceData;
+  }
+  *b = gBackBuffer;
+#endif
   LeaveCriticalSection(&gCS);
   return x;
 }
@@ -336,7 +490,34 @@ HRESULT __stdcall myIDirectDrawSurface::GetSurfaceDesc(LPDDSURFACEDESC a)
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDrawSurface::GetSurfaceDesc(LPDDSURFACEDESC 0x%x);", a);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->GetSurfaceDesc(a);
+  pushtab();
+    logfc("\n");
+    loghexdump(sizeof(DDSURFACEDESC), a);
+	/*
+	logf("dwSize = %d\n", a->dwSize);
+	logf("dwFlags = %d\n", a->dwFlags);
+	logf("dwHeight = %d\n", a->dwHeight);
+	logf("dwWidth = %d\n", a->dwWidth);
+	logf("dwLinearSize = %d\n", a->dwLinearSize);
+	logf("dwBackBufferCount = %d\n",a->dwBackBufferCount);
+	logf("dwRefreshRate = %d\n", a->dwRefreshRate);
+	logf("dwAlphaBitDepth = %d\n", a->dwAlphaBitDepth);
+	logf("dwReserved = %d\n", a->dwReserved);
+	logf("lpSurface = %d\n", a->lpSurface);
+//	logf("ddckCKDestOverlay = %d\n",ddckCKDestOverlay);
+//	logf("ddckCKDestBlt = %d\n", ddckCKDestBlt);
+//	logf("ddckCKSrcOverlay = %d\n", ddckCKSrcOverlay);
+//	logf("ddckCKSrcBlt = %d\n", ddckCKSrcBlt);
+//	logf("ddpfPixelFormat = %d\n", ddpfPixelFormat);
+//	logf("ddsCaps = %d\n", ddsCaps);
+*/
+  poptab();
+
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
@@ -372,7 +553,16 @@ HRESULT __stdcall myIDirectDrawSurface::Lock(LPRECT a, LPDDSURFACEDESC b, DWORD 
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDrawSurface::Lock(LPRECT 0x%x, LPDDSURFACEDESC 0x%x, DWORD %d, HANDLE);", a, b, c);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->Lock(a, b, c, d);
+  pushtab();
+    logfc("\n");
+    loghexdump(sizeof(DDSURFACEDESC), b);
+  poptab();
+
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
@@ -444,7 +634,11 @@ HRESULT __stdcall myIDirectDrawSurface::SetPalette(LPDIRECTDRAWPALETTE a)
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDrawSurface::SetPalette(LPDIRECTDRAWPALETTE 0x%x);", a);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->SetPalette((a)?((myIDirectDrawPalette *)a)->mOriginal:0);
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
@@ -456,7 +650,11 @@ HRESULT __stdcall myIDirectDrawSurface::Unlock(LPVOID a)
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDrawSurface::Unlock(LPVOID 0x%x);", a);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->Unlock(a);
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();

@@ -262,6 +262,8 @@ HRESULT __stdcall myIDirect3DDevice2::SetRenderTarget(LPDIRECTDRAWSURFACE a, DWO
 
 HRESULT __stdcall myIDirect3DDevice2::GetRenderTarget(LPDIRECTDRAWSURFACE * a)
 {
+		UNDEFINED_(E_FAIL);
+/*
   EnterCriticalSection(&gCS);
   logf("myIDirect3DDevice2::GetRenderTarget(LPDIRECTDRAWSURFACE * 0x%x);", a);
   HRESULT x = mOriginal->GetRenderTarget(a);
@@ -278,6 +280,7 @@ HRESULT __stdcall myIDirect3DDevice2::GetRenderTarget(LPDIRECTDRAWSURFACE * a)
   poptab();
   LeaveCriticalSection(&gCS);
   return x;
+  */
 }
 
 HRESULT __stdcall myIDirect3DDevice2::Begin(D3DPRIMITIVETYPE a, D3DVERTEXTYPE b, DWORD c)

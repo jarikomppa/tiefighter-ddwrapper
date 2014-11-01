@@ -66,7 +66,11 @@ ULONG __stdcall myIDirectDraw::Release()
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDraw::Release();");
+#ifdef PASSTHROUGH_WRAPPER
   ULONG x = mOriginal->Release();
+#else
+  ULONG x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   if (x == 0)
@@ -116,7 +120,11 @@ HRESULT __stdcall myIDirectDraw::CreatePalette(DWORD a, LPPALETTEENTRY b, LPDIRE
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDraw::CreatePalette(DWORD %d, LPPALETTEENTRY 0x%x, LPDIRECTDRAWPALETTE FAR * 0x%x, IUnknown FAR *);", a, b, c);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->CreatePalette(a, b, c, d);
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   myIDirectDrawPalette * n = (myIDirectDrawPalette *)wrapfetch(*c);
@@ -136,13 +144,21 @@ HRESULT __stdcall myIDirectDraw::CreateSurface(LPDDSURFACEDESC a, LPDIRECTDRAWSU
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDraw::CreateSurface(LPDDSURFACEDESC 0x%x, LPDIRECTDRAWSURFACE FAR * 0x%x, IUnknown FAR *);", a, b);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->CreateSurface(a, b, c);
+  pushtab();
+    logfc("\n");
+    loghexdump(sizeof(DDSURFACEDESC), a);
+  poptab();
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   IDirectDrawSurface * n = (IDirectDrawSurface *)wrapfetch(*b);
   if (n == NULL && *b != NULL)
   {
-    n = (IDirectDrawSurface *)new myIDirectDrawSurface(*b);
+    n = (IDirectDrawSurface *)new myIDirectDrawSurface(*b, a);
     wrapstore(n, *b);
     logf("Wrapped.\n");
   }
@@ -154,7 +170,8 @@ HRESULT __stdcall myIDirectDraw::CreateSurface(LPDDSURFACEDESC a, LPDIRECTDRAWSU
 
 HRESULT __stdcall myIDirectDraw::DuplicateSurface(LPDIRECTDRAWSURFACE a, LPDIRECTDRAWSURFACE FAR * b)
 {
-  EnterCriticalSection(&gCS);
+	/*
+	EnterCriticalSection(&gCS);
   logf("myIDirectDraw::DuplicateSurface(LPDIRECTDRAWSURFACE 0x%x, LPDIRECTDRAWSURFACE FAR * 0x%x);", a, b);
   HRESULT x = mOriginal->DuplicateSurface((a)?((myIDirectDrawSurface *)a)->mOriginal:0, b);
   logfc(" -> return %d\n", x);
@@ -170,6 +187,8 @@ HRESULT __stdcall myIDirectDraw::DuplicateSurface(LPDIRECTDRAWSURFACE a, LPDIREC
   poptab();
   LeaveCriticalSection(&gCS);
   return x;
+  */
+	UNDEFINED_(E_FAIL);
 }
 
 HRESULT __stdcall myIDirectDraw::EnumDisplayModes(DWORD a, LPDDSURFACEDESC b, LPVOID c, LPDDENUMMODESCALLBACK d)
@@ -200,7 +219,12 @@ HRESULT __stdcall myIDirectDraw::FlipToGDISurface()
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDraw::FlipToGDISurface();");
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->FlipToGDISurface();
+#else
+  HRESULT x = 0;
+  gl_updatescreen();
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
@@ -208,11 +232,91 @@ HRESULT __stdcall myIDirectDraw::FlipToGDISurface()
   return x;
 }
 
+// caps dumped from win7
+static unsigned char mycaps[] = {
+0x6C, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x01, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xD1, 0x9D, 0x49, 0x00, 
+0x00, 0x00, 0x00, 0x00, 0x90, 0x46, 0x85, 0x00, 0x88, 0xFF, 0x18, 0x00
+};
+
 HRESULT __stdcall myIDirectDraw::GetCaps(LPDDCAPS a, LPDDCAPS b)
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDraw::GetCaps(LPDDCAPS 0x%x, LPDDCAPS 0x%x);", a, b);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->GetCaps(a, b);
+  pushtab();
+    logfc("\n");
+    loghexdump(sizeof(DDCAPS), a);
+  poptab();
+/*
+  pushtab();
+	logf("dwSize = %d\n", a->dwSize);
+	logf("dwCaps = %d\n", a->dwCaps);
+	logf("dwCaps2 = %d\n", a->dwCaps2);
+	logf("dwCKeyCaps = %d\n", a->dwCKeyCaps);
+	logf("dwFXCaps = %d\n", a->dwFXCaps);
+	logf("dwFXAlphaCaps = %d\n", a->dwFXAlphaCaps);
+	logf("dwPalCaps = %d\n", a->dwPalCaps);
+	logf("dwSVCaps = %d\n", a->dwSVCaps);
+	logf("dwAlphaBltConstBitDepths = %d\n", a->dwAlphaBltConstBitDepths);
+	logf("dwAlphaBltPixelBitDepths = %d\n", a->dwAlphaBltPixelBitDepths);
+	logf("dwAlphaBltSurfaceBitDepths = %d\n", a->dwAlphaBltSurfaceBitDepths);
+	logf("dwAlphaOverlayConstBitDepths = %d\n", a->dwAlphaOverlayConstBitDepths);
+	logf("dwAlphaOverlayPixelBitDepths = %d\n", a->dwAlphaOverlayPixelBitDepths);
+	logf("dwAlphaOverlaySurfaceBitDepths = %d\n", a->dwAlphaOverlaySurfaceBitDepths);
+	logf("dwZBufferBitDepths = %d\n", a->dwZBufferBitDepths);
+	logf("dwVidMemTotal = %d\n", a->dwVidMemTotal);
+	logf("dwVidMemFree = %d\n", a->dwVidMemFree);
+	logf("dwMaxVisibleOverlays = %d\n", a->dwMaxVisibleOverlays);
+	logf("dwCurrVisibleOverlays = %d\n", a->dwCurrVisibleOverlays);
+	logf("dwNumFourCCCodes = %d\n", a->dwNumFourCCCodes);
+	logf("dwAlignBoundarySrc = %d\n", a->dwAlignBoundarySrc);
+	logf("dwAlignSizeSrc = %d\n", a->dwAlignSizeSrc);
+	logf("dwAlignBoundaryDest = %d\n", a->dwAlignBoundaryDest);
+	logf("dwAlignSizeDest = %d\n", a->dwAlignSizeDest);
+	logf("dwAlignStrideAlign = %d\n", a->dwAlignStrideAlign);
+	//logf("dwRops[DD_ROP_SPACE] = %d\n", dwRops[DD_ROP_SPACE]);
+	//logf("ddsCaps = %d\n", ddsCaps);
+	logf("dwMinOverlayStretch = %d\n", a->dwMinOverlayStretch);
+	logf("dwMaxOverlayStretch = %d\n", a->dwMaxOverlayStretch);
+	logf("dwMinLiveVideoStretch = %d\n", a->dwMinLiveVideoStretch);
+	logf("dwMaxLiveVideoStretch = %d\n", a->dwMaxLiveVideoStretch);
+	logf("dwMinHwCodecStretch = %d\n", a->dwMinHwCodecStretch);
+	logf("dwMaxHwCodecStretch = %d\n", a->dwMaxHwCodecStretch);
+	logf("dwReserved1 = %d\n", a->dwReserved1);
+	logf("dwReserved2 = %d\n", a->dwReserved2);
+	logf("dwReserved3 = %d\n", a->dwReserved3);
+	poptab();
+*/
+#else
+  HRESULT x = 0;
+  if (a)
+  {
+	  memcpy(a, mycaps, 0x16c);
+  }
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
@@ -254,7 +358,7 @@ HRESULT __stdcall myIDirectDraw::GetGDISurface(LPDIRECTDRAWSURFACE FAR * a)
   IDirectDrawSurface * n = (IDirectDrawSurface *)wrapfetch(*a);
   if (n == NULL && *a != NULL)
   {
-    n = (IDirectDrawSurface *)new myIDirectDrawSurface(*a);
+    n = (IDirectDrawSurface *)new myIDirectDrawSurface(*a, NULL);
     wrapstore(n, *a);
     logf("Wrapped.\n");
   }
@@ -268,7 +372,20 @@ HRESULT __stdcall myIDirectDraw::GetMonitorFrequency(LPDWORD a)
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDraw::GetMonitorFrequency(LPDWORD 0x%x);", a);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->GetMonitorFrequency(a);
+  pushtab();
+    logfc("\n");
+    loghexdump(sizeof(DWORD), a);
+  poptab();
+#else
+  HRESULT x = 0;
+  // win7 ddraw gives the actual refresh rate (120 for my monitor), but I guess
+  // 60hz should do.. 70hz was a common refresh back then, but games may use this
+  // value to create a timer or something and that might blow up if we spend way too
+  // much time flipping graphics..
+  *a = 60; 
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
@@ -292,7 +409,19 @@ HRESULT __stdcall myIDirectDraw::GetVerticalBlankStatus(LPBOOL a)
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDraw::GetVerticalBlankStatus(LPBOOL 0x%x);", a);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->GetVerticalBlankStatus(a);
+  pushtab();
+    logfc("\n");
+    loghexdump(sizeof(BOOL), a);
+  poptab();
+#else
+  HRESULT x = 0;
+  // real ddraw in win7 seems to return 0 and 1 on subsequent calls, so we'll follow suit
+  static int flipflop = 0;
+  flipflop = !flipflop;
+  *a = flipflop;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
@@ -316,7 +445,11 @@ HRESULT __stdcall myIDirectDraw::RestoreDisplayMode()
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDraw::RestoreDisplayMode();");
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->RestoreDisplayMode();
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
@@ -328,10 +461,17 @@ HRESULT __stdcall myIDirectDraw::SetCooperativeLevel(HWND a, DWORD b)
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDraw::SetCooperativeLevel(HWND 0x%x, DWORD %d);", a, b);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->SetCooperativeLevel(a, b);
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
+#ifndef PASSTHROUGH_WRAPPER
+  gl_init(a);
+#endif
   LeaveCriticalSection(&gCS);
   return x;
 }
@@ -340,10 +480,17 @@ HRESULT __stdcall myIDirectDraw::SetDisplayMode(DWORD a, DWORD b, DWORD c)
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDraw::SetDisplayMode(DWORD %d, DWORD %d, DWORD %d);", a, b, c);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->SetDisplayMode(a, b, c);
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
+#ifndef PASSTHROUGH_WRAPPER
+  gl_setvideomode(a,b,c);
+#endif
   LeaveCriticalSection(&gCS);
   return x;
 }
@@ -356,6 +503,9 @@ HRESULT __stdcall myIDirectDraw::WaitForVerticalBlank(DWORD a, HANDLE b)
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
+#ifndef PASSTHROUGH_WRAPPER
+  gl_updatescreen();
+#endif
   LeaveCriticalSection(&gCS);
   return x;
 }

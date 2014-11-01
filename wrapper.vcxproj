@@ -59,6 +59,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ModuleDefinitionFile>exports.def</ModuleDefinitionFile>
+      <AdditionalDependencies>opengl32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -82,6 +83,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ddinput.cpp" />
+    <ClCompile Include="gloutput.cpp" />
     <ClCompile Include="interfacequery.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="myIDirect3D.cpp" />
@@ -121,7 +123,7 @@
     <ClCompile Include="myIDirectDrawSurface7.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ddoutput.h" />
+    <ClInclude Include="gloutput.h" />
     <ClInclude Include="myIDirect3D.h" />
     <ClInclude Include="myIDirect3D2.h" />
     <ClInclude Include="myIDirect3D3.h" />

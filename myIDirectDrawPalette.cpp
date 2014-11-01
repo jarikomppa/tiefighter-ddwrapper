@@ -66,7 +66,11 @@ ULONG __stdcall myIDirectDrawPalette::Release()
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDrawPalette::Release();");
+#ifdef PASSTHROUGH_WRAPPER
   ULONG x = mOriginal->Release();
+#else
+  ULONG x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   if (x == 0)
@@ -120,7 +124,11 @@ HRESULT __stdcall myIDirectDrawPalette::SetEntries(DWORD a, DWORD b, DWORD c, LP
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDrawPalette::SetEntries(DWORD %d, DWORD %d, DWORD %d, LPPALETTEENTRY 0x%x);", a, b, c, d);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->SetEntries(a, b, c, d);
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();

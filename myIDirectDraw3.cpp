@@ -142,7 +142,7 @@ HRESULT __stdcall myIDirectDraw3::CreateSurface(LPDDSURFACEDESC a, LPDIRECTDRAWS
   IDirectDrawSurface * n = (IDirectDrawSurface *)wrapfetch(*b);
   if (n == NULL && *b != NULL)
   {
-    n = (IDirectDrawSurface *)new myIDirectDrawSurface(*b);
+    n = (IDirectDrawSurface *)new myIDirectDrawSurface(*b, a);
     wrapstore(n, *b);
     logf("Wrapped.\n");
   }
@@ -154,6 +154,7 @@ HRESULT __stdcall myIDirectDraw3::CreateSurface(LPDDSURFACEDESC a, LPDIRECTDRAWS
 
 HRESULT __stdcall myIDirectDraw3::DuplicateSurface(LPDIRECTDRAWSURFACE a, LPDIRECTDRAWSURFACE FAR * b)
 {
+	/*
   EnterCriticalSection(&gCS);
   logf("myIDirectDraw3::DuplicateSurface(LPDIRECTDRAWSURFACE 0x%x, LPDIRECTDRAWSURFACE FAR * 0x%x);", a, b);
   HRESULT x = mOriginal->DuplicateSurface((a)?((myIDirectDrawSurface *)a)->mOriginal:0, b);
@@ -170,6 +171,8 @@ HRESULT __stdcall myIDirectDraw3::DuplicateSurface(LPDIRECTDRAWSURFACE a, LPDIRE
   poptab();
   LeaveCriticalSection(&gCS);
   return x;
+  */
+	UNDEFINED_(E_FAIL);
 }
 
 HRESULT __stdcall myIDirectDraw3::EnumDisplayModes(DWORD a, LPDDSURFACEDESC b, LPVOID c, LPDDENUMMODESCALLBACK d)
@@ -254,7 +257,7 @@ HRESULT __stdcall myIDirectDraw3::GetGDISurface(LPDIRECTDRAWSURFACE FAR * a)
   IDirectDrawSurface * n = (IDirectDrawSurface *)wrapfetch(*a);
   if (n == NULL && *a != NULL)
   {
-    n = (IDirectDrawSurface *)new myIDirectDrawSurface(*a);
+    n = (IDirectDrawSurface *)new myIDirectDrawSurface(*a, NULL);
     wrapstore(n, *a);
     logf("Wrapped.\n");
   }
@@ -374,6 +377,7 @@ HRESULT __stdcall myIDirectDraw3::GetAvailableVidMem(LPDDSCAPS a, LPDWORD b, LPD
 
 HRESULT __stdcall myIDirectDraw3::GetSurfaceFromDC(HDC a, IDirectDrawSurface * * b)
 {
+	/*
   EnterCriticalSection(&gCS);
   logf("myIDirectDraw3::GetSurfaceFromDC(HDC, IDirectDrawSurface * *);");
   HRESULT x = mOriginal->GetSurfaceFromDC(a, b);
@@ -390,5 +394,8 @@ HRESULT __stdcall myIDirectDraw3::GetSurfaceFromDC(HDC a, IDirectDrawSurface * *
   poptab();
   LeaveCriticalSection(&gCS);
   return x;
+  */
+	UNDEFINED_(E_FAIL);
+
 }
 

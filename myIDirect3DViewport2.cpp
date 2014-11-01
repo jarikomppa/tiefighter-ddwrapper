@@ -178,6 +178,8 @@ HRESULT __stdcall myIDirect3DViewport2::SetBackgroundDepth(LPDIRECTDRAWSURFACE a
 
 HRESULT __stdcall myIDirect3DViewport2::GetBackgroundDepth(LPDIRECTDRAWSURFACE * a, LPBOOL b)
 {
+		UNDEFINED_(E_FAIL);
+/*
   EnterCriticalSection(&gCS);
   logf("myIDirect3DViewport2::GetBackgroundDepth(LPDIRECTDRAWSURFACE * 0x%x, LPBOOL 0x%x);", a, b);
   HRESULT x = mOriginal->GetBackgroundDepth(a, b);
@@ -194,6 +196,7 @@ HRESULT __stdcall myIDirect3DViewport2::GetBackgroundDepth(LPDIRECTDRAWSURFACE *
   poptab();
   LeaveCriticalSection(&gCS);
   return x;
+  */
 }
 
 HRESULT __stdcall myIDirect3DViewport2::Clear(DWORD a, LPD3DRECT b, DWORD c)

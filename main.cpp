@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <varargs.h>
-//#include "ddoutput.h"
+#include "gloutput.h"
 
 CRITICAL_SECTION gCS;
 
@@ -15,11 +15,16 @@ bool _stdcall SetWindowPosHook(HWND, HWND, int, int, int, int, int) { return tru
 bool _stdcall SetWindowLongHook(HWND, int, int) { return true; }
 bool _stdcall ShowWindowHook(HWND, int) { return true; }
 
-bool _stdcall DllMain(HANDLE, DWORD dwReason, LPVOID) {
-	if(dwReason==DLL_PROCESS_ATTACH) {
-		InitializeCriticalSection(&gCS);
-	} else if(dwReason==DLL_PROCESS_DETACH) {
-		//d3d9Exit();
+bool _stdcall DllMain(HANDLE, DWORD dwReason, LPVOID) 
+{
+	if(dwReason==DLL_PROCESS_ATTACH) 
+	{
+		InitializeCriticalSection(&gCS);		
+	} 
+	else 
+    if(dwReason==DLL_PROCESS_DETACH) 
+	{
+		gl_exit();
 		DeleteCriticalSection(&gCS);
 	}
 	return true;
@@ -56,12 +61,44 @@ long long milliseconds_now() {
     }
 }
 
-FILE * openlog()
+static FILE * gBigLog = NULL;
+
+FILE * doopenlog()
 {
 	char fname[]="wrapper0.log";
 	fname[7] = '0' + (gLoglines >> 20); // new file every ~1024k lines
 
 	return fopen(fname, "a");
+}
+
+FILE * openlog()
+{
+	if (gBigLog)
+		return gBigLog;
+	return doopenlog();
+}
+
+void closelog(FILE * f)
+{
+	if (gBigLog)
+		return;
+	fclose(f);
+}
+
+
+void startbiglog()
+{
+#ifndef DISABLE_LOGGING
+	gBigLog = doopenlog();
+#endif
+}
+
+void endbiglog()
+{
+#ifndef DISABLE_LOGGING
+	fclose(gBigLog);
+	gBigLog = NULL;
+#endif
 }
 
 void logfc(char * fmt, ...)
@@ -76,7 +113,7 @@ void logfc(char * fmt, ...)
 	if (f)
 	{
 		vfprintf(f, fmt, ap);
-		fclose(f);
+		closelog(f);
 	}
 	va_end(ap);
 #endif
@@ -100,9 +137,40 @@ void logf(char * fmt, ...)
 		int i;
 		for (i = 0; i < gTabStops; i++) fputc('\t', f);
 		vfprintf(f, fmt, ap);
-		fclose(f);
+		closelog(f);
 	}
 	va_end(ap);
+#endif
+}
+
+void loghexdump(int size, void * aData)
+{
+#ifndef DISABLE_LOGGING
+	int bl = 0;
+	if (gBigLog == NULL)
+	{
+		bl = 1;
+		startbiglog();
+	}
+	char temp[256];
+	char *p = &temp[0];
+	int i;
+	unsigned char *data = (unsigned char*)aData;
+	for (i = 0; i < size; i++)
+	{
+		p += sprintf(p, "%02X ", data[i]);
+		if (i % 32 == 15)
+			p += sprintf(p, "  ");
+		if (i % 32 == 31)
+		{
+			logf("%s\n", temp);
+			p = &temp[0];
+		}
+	}
+	if (size % 32 != 31)
+		logf("%s\n",temp);
+	if (bl)
+		endbiglog();
 #endif
 }
 

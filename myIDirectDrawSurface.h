@@ -24,11 +24,12 @@
 // distribution.
 
 #pragma once
+class myIDDrawPalette;
 
 class myIDirectDrawSurface : public IDirectDrawSurface
 {
 public:
-  myIDirectDrawSurface(IDirectDrawSurface * aOriginal);
+  myIDirectDrawSurface(IDirectDrawSurface * aOriginal, LPDDSURFACEDESC aSurfacedesc);
   ~myIDirectDrawSurface();
 
   HRESULT __stdcall QueryInterface(REFIID riid, LPVOID FAR * ppvObj);
@@ -69,5 +70,12 @@ public:
   HRESULT __stdcall UpdateOverlayZOrder(DWORD a, LPDIRECTDRAWSURFACE b);
 
   IDirectDrawSurface * mOriginal;
+  DDSURFACEDESC mSurfaceDesc;
+  myIDDrawPalette *mCurrentPalette;
+  unsigned char * mSurfaceData;
+  unsigned char * mRealSurfaceData;
+  int mWidth;
+  int mHeight;
+  int mPitch;
 };
 
