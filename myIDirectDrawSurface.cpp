@@ -81,7 +81,16 @@ myIDirectDrawSurface::myIDirectDrawSurface(IDirectDrawSurface * aOriginal, LPDDS
 
 myIDirectDrawSurface::~myIDirectDrawSurface()
 {
-  logf("myIDirectDrawSurface dtor\n");
+	char * extrabit = "";
+	if (this == gBackBuffer) extrabit = " (backbuffer)";
+	if (this == gPrimarySurface) extrabit = " (primary)";
+
+  logf("myIDirectDrawSurface dtor%s\n", extrabit);
+
+  if (this == gBackBuffer)
+  {
+	  gBackBuffer = NULL;
+  }
 
   if (this == gPrimarySurface)
 	{

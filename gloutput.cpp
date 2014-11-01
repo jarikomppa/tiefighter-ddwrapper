@@ -45,6 +45,30 @@ void gl_updatescreen()
 			}
 		}
 	}
+	if (gScreenBits == 16)
+	{
+		unsigned short * surf = (unsigned short *)gPrimarySurface->mSurfaceData;
+		int pitch = gPrimarySurface->mPitch / 2;
+		for (i = 0; i < gScreenHeight; i++)
+		{
+			for (j = 0; j < gScreenWidth; j++)
+			{
+				int pix = surf[pitch * i + j];				
+						
+				int red   = (pix >> 11) & ((1 << 5) - 1);
+				int green = (pix >>  5) & ((1 << 6) - 1);
+				int blue  = (pix >>  0) & ((1 << 5) - 1);
+						
+				// fill bottom bits
+				red = (red << 3) | (red >> 2);
+				green = (green << 2) | (green >> 4);
+				blue = (blue << 3) | (blue >> 2);
+
+				gTemp[i*gScreenWidth+j] = (blue << 16) | (green << 8) | red;
+			}
+		}
+
+	}
 	/*
 	tex_w/=2;
 	tex_h/=2;
@@ -112,6 +136,8 @@ void gl_updatescreen()
 
 LRESULT CALLBACK newwinproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {	
+	logf("newwinproc %x %x %x %x", hWnd, uMsg, wParam, lParam);
+	
 	static int focus = 1;
 	int tick = GetTickCount();
 	if (gLastUpdate == -1)
@@ -175,13 +201,17 @@ LRESULT CALLBACK newwinproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 	}
-
+	
 	// Pass control to the application..	
-	return origfunc(hWnd, uMsg, wParam, lParam);
+	return CallWindowProc(origfunc,hWnd, uMsg, wParam, lParam);
 }
 
 void gl_setvideomode(int w, int h, int bits)
 {
+	gScreenWidth = w;
+	gScreenHeight = h;
+	gScreenBits = bits;
+
 	gAllowResize = 1;
 	// Go full screen..
 	MoveWindow(gHwnd, 0, 0, gRealScreenWidth, gRealScreenHeight, 0);
@@ -199,9 +229,12 @@ void gl_init(HWND aHwnd)
 	gHwnd = aHwnd;
 
 	// Get the application's window procedure..
-	origfunc = (WNDPROC)GetWindowLong(gHwnd, GWL_WNDPROC);
+	origfunc = (WNDPROC)GetWindowLongPtr(gHwnd, GWLP_WNDPROC);
 	// ..and replace it with our own.
-	//SetWindowLong(gHwnd, GWL_WNDPROC, (long)newwinproc);
+	SetWindowLongPtr(gHwnd, GWLP_WNDPROC, (LONG)newwinproc);
+	// "Certain window data is cached, so changes you make using SetWindowLongPtr 
+	//  will not take effect until you call the SetWindowPos function." -- MSDN
+	SetWindowPos(gHwnd, NULL, 0, 0, 0, 0, SWP_NOSIZE); 
 	
 	RECT r;
 	r.top = 0;
