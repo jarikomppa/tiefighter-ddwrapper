@@ -262,6 +262,29 @@ HRESULT __stdcall myIDirectDrawSurface::Blt(LPRECT a, LPDIRECTDRAWSURFACE b, LPR
   HRESULT x = mOriginal->Blt(a, (b)?((myIDirectDrawSurface *)b)->mOriginal:0, c, d, e);
 #else
   HRESULT x = 0;
+  if (d == DDBLT_COLORFILL)
+  {
+	  if (this->mSurfaceDesc.ddpfPixelFormat.dwRGBBitCount == 8)
+	  {
+		  memset(mSurfaceData, e->dwFillColor, mWidth * mHeight);
+	  }
+	  if (this->mSurfaceDesc.ddpfPixelFormat.dwRGBBitCount == 16)
+	  {
+		  unsigned short * surf = (unsigned short*)mSurfaceData;
+		  int i, j;
+		  for (i = 0; i < mHeight; i++)
+			  for (j = 0; j < mWidth; j++)
+				  surf[i * mPitch/2 + j] = e->dwFillColor;
+	  }
+  }
+  if (d == DDBLT_ROP)
+  {
+	  // assuming full copy and equal sized surfaces
+	  if (b)
+	  {
+		  memcpy(mSurfaceData, ((myIDirectDrawSurface*)b)->mSurfaceData, mWidth * mHeight * 2);
+	  }
+  }
 #endif
   logfc(" -> return %d\n", x);
   pushtab();
