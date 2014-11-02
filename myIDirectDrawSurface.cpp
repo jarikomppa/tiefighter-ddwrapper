@@ -290,7 +290,7 @@ HRESULT __stdcall myIDirectDrawSurface::Blt(LPRECT a, LPDIRECTDRAWSURFACE b, LPR
 		  int i, j;
 		  for (i = 0; i < mHeight; i++)
 			  for (j = 0; j < mWidth; j++)
-				  surf[i * mPitch/2 + j] = e->dwFillColor;
+				  surf[i * mPitch/2 + j] = (unsigned short)e->dwFillColor;
 	  }
   }
   

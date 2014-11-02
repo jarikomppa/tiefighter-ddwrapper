@@ -40,12 +40,21 @@ myIDirectDraw::~myIDirectDraw()
 HRESULT __stdcall myIDirectDraw::QueryInterface(REFIID riid, LPVOID FAR * ppvObj)
 {
   EnterCriticalSection(&gCS);
-  logf("myIDirectDraw::QueryInterface(REFIID, LPVOID FAR * 0x%x);", ppvObj);
+  logf("myIDirectDraw::QueryInterface(REFIID {%08x-%04x-%04x-%02x%02x%02x%02x%02x%02x%02x%02x}, LPVOID FAR * 0x%x);", 
+	  riid.Data1, riid.Data2, riid.Data3, 
+	  riid.Data4[0], riid.Data4[1], riid.Data4[2], riid.Data4[3],
+	  riid.Data4[4], riid.Data4[5], riid.Data4[6], riid.Data4[7],
+	  ppvObj);
+
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->QueryInterface(riid, ppvObj);
-  logfc(" -> return %d\n", x);
+#else
+  HRESULT x = 0;
+#endif
   pushtab();
   if (x == 0) genericQueryInterface(riid, ppvObj);
   poptab();
+  logfc(" -> return %d\n", x);
   LeaveCriticalSection(&gCS);
   return x;
 }
