@@ -146,14 +146,30 @@ HRESULT __stdcall myIDirectDraw::CreatePalette(DWORD a, LPPALETTEENTRY b, LPDIRE
 
 HRESULT __stdcall myIDirectDraw::CreateSurface(LPDDSURFACEDESC a, LPDIRECTDRAWSURFACE FAR * b, IUnknown FAR * c)
 {
+  startbiglog();
   EnterCriticalSection(&gCS);
-  logf("myIDirectDraw::CreateSurface(LPDDSURFACEDESC 0x%x, LPDIRECTDRAWSURFACE FAR * 0x%x, IUnknown FAR *);", a, b);
+  logf("myIDirectDraw::CreateSurface(LPDDSURFACEDESC 0x%x, LPDIRECTDRAWSURFACE FAR * 0x%x, IUnknown FAR *);\n", a, b);
+  pushtab();
+	logf("dwHeight = %x (%d)\n", a->dwHeight, a->dwHeight);
+	logf("dwWidth = %x (%d)\n", a->dwWidth, a->dwWidth);
+	logf("dwLinearSize = %x (%d)\n", a->dwLinearSize, a->dwLinearSize);
+	logf("dwBackBufferCount = %x (%d)\n",a->dwBackBufferCount,a->dwBackBufferCount);
+	logf("dwRefreshRate = %x (%d)\n", a->dwRefreshRate, a->dwRefreshRate);
+	logf("dwAlphaBitDepth = %x (%d)\n", a->dwAlphaBitDepth, a->dwAlphaBitDepth);
+	logf("dwReserved = %x (%d)\n", a->dwReserved, a->dwReserved);
+	logf("lpSurface = %x (%d)\n", a->lpSurface, a->lpSurface);
+	logf("ddsCaps.dwCaps = %x (%d)\n", a->ddsCaps.dwCaps, a->ddsCaps.dwCaps);
+	logf("ddpfPixelFormat.dwSize = %x (%d)\n", a->ddpfPixelFormat.dwSize, a->ddpfPixelFormat.dwSize);
+	logf("ddpfPixelFormat.dwFlags = %x (%d)\n", a->ddpfPixelFormat.dwFlags, a->ddpfPixelFormat.dwFlags);
+	logf("ddpfPixelFormat.dwFourCC = %x (%d)\n", a->ddpfPixelFormat.dwFourCC, a->ddpfPixelFormat.dwFourCC);
+	logf("ddpfPixelFormat.dwRGBBitCount = %x (%d)\n", a->ddpfPixelFormat.dwRGBBitCount, a->ddpfPixelFormat.dwRGBBitCount);
+	logf("ddpfPixelFormat.dwRBitMask = %x (%d)\n", a->ddpfPixelFormat.dwRBitMask, a->ddpfPixelFormat.dwRBitMask);
+	logf("ddpfPixelFormat.dwGBitMask = %x (%d)\n", a->ddpfPixelFormat.dwGBitMask, a->ddpfPixelFormat.dwGBitMask);
+	logf("ddpfPixelFormat.dwBBitMask = %x (%d)\n", a->ddpfPixelFormat.dwBBitMask, a->ddpfPixelFormat.dwBBitMask);
+	logf("ddpfPixelFormat.dwRGBAlphaBitMask = %x (%d)\n", a->ddpfPixelFormat.dwRGBAlphaBitMask, a->ddpfPixelFormat.dwRGBAlphaBitMask);
+  poptab();
 #ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->CreateSurface(a, b, c);
-  pushtab();
-    logfc("\n");
-    loghexdump(sizeof(DDSURFACEDESC), a);
-  poptab();
   pushtab();
   IDirectDrawSurface * n = (IDirectDrawSurface *)wrapfetch(*b);
   if (n == NULL && *b != NULL)
@@ -166,13 +182,13 @@ HRESULT __stdcall myIDirectDraw::CreateSurface(LPDDSURFACEDESC a, LPDIRECTDRAWSU
   poptab();
 #else
   pushtab();
-  logfc("\n");
   *b = (IDirectDrawSurface *)new myIDirectDrawSurface(*b, a);
   poptab();
   HRESULT x = 0;
 #endif
   LeaveCriticalSection(&gCS);
   logfc(" -> return %d\n", x);
+  endbiglog();
   return x;
 }
 

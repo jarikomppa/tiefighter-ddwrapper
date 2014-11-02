@@ -3,7 +3,6 @@
 #include <gl/gl.h>
 #include "wrapper.h"
 
-int gMouseX = 0, gMouseY = 0;
 int gLastUpdate = -1;
 int gScreenWidth = 640;
 int gScreenHeight = 480;
@@ -68,7 +67,7 @@ void gl_updatescreen()
 				green = (green << 2) | (green >> 4);
 				blue = (blue << 3) | (blue >> 2);
 
-				gTemp[i*gScreenWidth+j] = (blue << 16) | (green << 8) | red;
+				gTemp[j + i * gScreenWidth] = (blue << 16) | (green << 8) | red;
 			}
 		}
 
@@ -134,20 +133,30 @@ void gl_updatescreen()
     glEnd();
     
 	// Mouse cursor
-	float mx = (((float)gMouseX / gScreenWidth) - 0.5f) * w * 2;
-	float my = (((float)gMouseY / gScreenHeight) - 0.5f) * -h * 2;
+	CURSORINFO ci;
+	ci.cbSize = sizeof(ci);
+	GetCursorInfo(&ci);
+	int mousex = ci.ptScreenPos.x;
+	int mousey = ci.ptScreenPos.y;
+
+	float mx = (((float)mousex / gScreenWidth) - 0.5f) * w * 2;
+	float my = (((float)mousey / gScreenHeight) - 0.5f) * -h * 2;
 	
-	glDisable(GL_TEXTURE_2D);
-	glBegin(GL_TRIANGLES);
-        glVertex2f( mx, my);
-        glVertex2f( mx+0.05f*r_aspect, my-0.02f*aspect);
-        glVertex2f( mx+0.02f*r_aspect, my-0.05f*aspect);	
-    glEnd();
+	if (ci.flags & CURSOR_SHOWING)
+	{
+		glDisable(GL_TEXTURE_2D);
+		glBegin(GL_TRIANGLES);
+			glVertex2f( mx, my);
+			glVertex2f( mx+0.05f*r_aspect, my-0.02f*aspect);
+			glVertex2f( mx+0.02f*r_aspect, my-0.05f*aspect);	
+		glEnd();
+	}
 
 
 	SwapBuffers(gWindowDC);
 
 }
+
 
 
 LRESULT CALLBACK newwinproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -449,8 +458,6 @@ LRESULT CALLBACK newwinproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (!focus)
 				return 0;
 			
-			gMouseX = GET_X_LPARAM(lParam); 
-			gMouseY = GET_Y_LPARAM(lParam); 
 		}
 		break;
 	case WM_WINDOWPOSCHANGING:
@@ -496,6 +503,7 @@ void gl_init(HWND aHwnd)
 	origfunc = (WNDPROC)GetWindowLongPtr(gHwnd, GWLP_WNDPROC);
 	// ..and replace it with our own.
 	SetWindowLongPtr(gHwnd, GWLP_WNDPROC, (LONG)newwinproc);
+	
 	// "Certain window data is cached, so changes you make using SetWindowLongPtr 
 	//  will not take effect until you call the SetWindowPos function." -- MSDN
 	SetWindowPos(gHwnd, NULL, 0, 0, 0, 0, SWP_NOSIZE); 

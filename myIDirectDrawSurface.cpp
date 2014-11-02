@@ -28,7 +28,7 @@
 
 myIDirectDrawSurface::myIDirectDrawSurface(IDirectDrawSurface * aOriginal, LPDDSURFACEDESC aSurfacedesc)
 {
-  logf("myIDirectDrawSurface ctor %x\n", this);
+  logf("myIDirectDrawSurface ctor %x", this);
 
   mOriginal = aOriginal;
 
@@ -62,7 +62,20 @@ myIDirectDrawSurface::myIDirectDrawSurface(IDirectDrawSurface * aOriginal, LPDDS
 	{
 		if (aSurfacedesc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
 		{
-			gPrimarySurface = this;			
+			gPrimarySurface = this;
+			logfc(" (primary)");
+			mSurfaceDesc.dwFlags |= DDSD_BACKBUFFERCOUNT | DDSD_HEIGHT | DDSD_LINEARSIZE | DDSD_PITCH | DDSD_PIXELFORMAT | DDSD_WIDTH;
+
+			mSurfaceDesc.ddpfPixelFormat.dwRGBBitCount = gScreenBits;
+			mSurfaceDesc.dwWidth = mWidth;
+			mSurfaceDesc.dwHeight = mHeight;
+			mSurfaceDesc.lPitch = mHeight * mWidth * gScreenBits / 8;
+			if (gScreenBits == 16)
+			{
+				mSurfaceDesc.ddpfPixelFormat.dwRBitMask = ((1 << 5)-1) << 11;
+				mSurfaceDesc.ddpfPixelFormat.dwGBitMask = ((1 << 6)-1) << 5;
+				mSurfaceDesc.ddpfPixelFormat.dwBBitMask = ((1 << 5)-1) << 0;
+			}
 		}
 	}
 
@@ -74,9 +87,11 @@ myIDirectDrawSurface::myIDirectDrawSurface(IDirectDrawSurface * aOriginal, LPDDS
 	// Let's pad the framebuffer by a couple of megs, in case
 	// the app writes outside bounds..
 	// (we have enough trouble being stable as it is)
-	mRealSurfaceData = new unsigned char[mHeight * mPitch + 2 * 1024 * 1024];
+	mRealSurfaceData = new unsigned char[mHeight * mPitch * 2 + 2 * 1024 * 1024];
 	mSurfaceData = mRealSurfaceData + 1024 * 1024 * 1;
-	memset(mSurfaceData, 0, mHeight * mPitch);
+	memset(mSurfaceData, 0, mHeight * mPitch * 2);
+	
+	logfc("\n");
 }
 
 myIDirectDrawSurface::~myIDirectDrawSurface()
@@ -262,7 +277,7 @@ HRESULT __stdcall myIDirectDrawSurface::Blt(LPRECT a, LPDIRECTDRAWSURFACE b, LPR
   HRESULT x = mOriginal->Blt(a, (b)?((myIDirectDrawSurface *)b)->mOriginal:0, c, d, e);
 #else
   HRESULT x = 0;
-  /*
+  
   if (d == DDBLT_COLORFILL)
   {
 	  if (this->mSurfaceDesc.ddpfPixelFormat.dwRGBBitCount == 8)
@@ -278,7 +293,7 @@ HRESULT __stdcall myIDirectDrawSurface::Blt(LPRECT a, LPDIRECTDRAWSURFACE b, LPR
 				  surf[i * mPitch/2 + j] = e->dwFillColor;
 	  }
   }
-  */
+  
   if (d == DDBLT_ROP)
   {
 	  // assuming full copy and equal sized surfaces
@@ -411,6 +426,7 @@ HRESULT __stdcall myIDirectDrawSurface::GetAttachedSurface(LPDDSCAPS a, LPDIRECT
 	  gBackBuffer = new myIDirectDrawSurface(NULL, &bbdesc);
 	  gBackBuffer->mSurfaceData = mSurfaceData;
   }
+  logfc("Back = %x", gBackBuffer);
   *b = gBackBuffer;
   poptab();
 #endif
@@ -558,9 +574,13 @@ HRESULT __stdcall myIDirectDrawSurface::GetSurfaceDesc(LPDDSURFACEDESC a)
 #ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->GetSurfaceDesc(a);
   pushtab();
-    logfc("\n");
     loghexdump(sizeof(DDSURFACEDESC), a);
-	
+#else
+  HRESULT x = 0;
+  *a = mSurfaceDesc;
+#endif
+    pushtab();
+    logfc("\n");
 	logf("dwSize = %x (%d)\n", a->dwSize, a->dwSize);
 	logf("dwFlags = %x (%d)", a->dwFlags, a->dwFlags);
 #define FLAGGY(x) if ((a->dwFlags & x) == x) logfc(#x " ");
@@ -605,10 +625,6 @@ HRESULT __stdcall myIDirectDrawSurface::GetSurfaceDesc(LPDDSURFACEDESC a)
 
   poptab();
 
-#else
-  HRESULT x = 0;
-  *a = mSurfaceDesc;
-#endif
   logfc(" -> return %d\n", x);
   endbiglog();
   LeaveCriticalSection(&gCS);
@@ -679,7 +695,8 @@ HRESULT __stdcall myIDirectDrawSurface::Lock(LPRECT a, LPDDSURFACEDESC b, DWORD 
 
 #else
   HRESULT x = 0;
-	*b = mSurfaceDesc;
+  mSurfaceDesc.lpSurface = mSurfaceData;
+  *b = mSurfaceDesc;
 
 	b->dwFlags |= DDSD_LPSURFACE | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH;
 	b->lpSurface = mSurfaceData;
