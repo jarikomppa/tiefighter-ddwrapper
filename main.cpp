@@ -31,6 +31,13 @@ bool _stdcall DllMain(HANDLE, DWORD dwReason, LPVOID)
 }
 
 //#define DISABLE_LOGGING
+
+#ifdef NDEBUG
+#ifndef DISABLE_LOGGING
+#define DISABLE_LOGGING
+#endif
+#endif
+
 #define MAX_TABDEPTH 100
 
 int gLoglines = 0;

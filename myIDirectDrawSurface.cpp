@@ -146,7 +146,10 @@ ULONG __stdcall myIDirectDrawSurface::Release()
 {
   EnterCriticalSection(&gCS);
   char *extrabit = "";
-  if (this == gPrimarySurface) extrabit = " (Primary)";
+  if (this == gPrimarySurface) 
+  {
+	  extrabit = " (Primary)";
+  }
   if (this == gBackBuffer) extrabit = " (Backbuffer)";
   logf("myIDirectDrawSurface::Release(); %x %s", this, extrabit);
 #ifdef PASSTHROUGH_WRAPPER
@@ -160,7 +163,7 @@ ULONG __stdcall myIDirectDrawSurface::Release()
   {
     wrapstore(mOriginal, 0);
     mOriginal = NULL;
-    //delete this;
+    delete this;
   }
   poptab();
   LeaveCriticalSection(&gCS);

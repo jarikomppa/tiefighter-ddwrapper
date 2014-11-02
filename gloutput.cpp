@@ -48,7 +48,7 @@ void gl_updatescreen()
 			}
 		}
 	}
-	if (gScreenBits == 16)
+	if (gScreenBits == 16 && gPrimarySurface && gPrimarySurface->mSurfaceData)
 	{
 		unsigned short * surf = (unsigned short *)gPrimarySurface->mSurfaceData;
 		int pitch = gPrimarySurface->mPitch / 2;
