@@ -145,11 +145,22 @@ void gl_updatescreen()
 	if (ci.flags & CURSOR_SHOWING)
 	{
 		glDisable(GL_TEXTURE_2D);
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_ONE, GL_ONE);
+	    glColor4f(0.2f,0.2f,0.2f,1.0f); 
 		glBegin(GL_TRIANGLES);
 			glVertex2f( mx, my);
 			glVertex2f( mx+0.05f*r_aspect, my-0.02f*aspect);
 			glVertex2f( mx+0.02f*r_aspect, my-0.05f*aspect);	
+			glVertex2f( mx, my);
+			glVertex2f( mx+0.04f*r_aspect, my-0.01f*aspect);
+			glVertex2f( mx+0.01f*r_aspect, my-0.04f*aspect);	
+		    glColor4f(0.4f,0.4f,0.4f,1.0f); 
+			glVertex2f( mx, my);
+			glVertex2f( mx+0.045f*r_aspect, my-0.015f*aspect);
+			glVertex2f( mx+0.015f*r_aspect, my-0.045f*aspect);	
 		glEnd();
+		glDisable(GL_BLEND);
 	}
 
 
