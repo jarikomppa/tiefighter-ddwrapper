@@ -8,9 +8,11 @@ int gScreenWidth = 640;
 int gScreenHeight = 480;
 int gScreenBits = 8;
 int gAllowResize = 0;
+int gFocused = 1;
 WNDPROC origfunc = NULL;
 HWND gHwnd;
 HDC gWindowDC;
+HGLRC gOpenGLRC = NULL;
 
 int gRealScreenWidth;
 int gRealScreenHeight;
@@ -20,6 +22,8 @@ int gTemp[640*480];
 
 myIDirectDrawSurface *gPrimarySurface = NULL, *gBackBuffer = NULL;
 
+void gl_setup();
+
 void gl_updatescreen()
 {
 	int i, j;
@@ -27,6 +31,9 @@ void gl_updatescreen()
 	int tex_h = 512;
 
 	gLastUpdate = GetTickCount();
+
+	//if (!gFocused)
+//		return;
 
 	if (gScreenWidth > 320)
 	{
@@ -101,7 +108,10 @@ void gl_updatescreen()
 
     glEnable(GL_TEXTURE_2D);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0);
-	glViewport(0, 0, gRealScreenWidth, gRealScreenHeight);
+	if (gFocused)
+		glViewport(0, 0, gRealScreenWidth, gRealScreenHeight);
+	else
+		glViewport(0, 0, gRealScreenWidth/10, gRealScreenHeight/10);
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -142,7 +152,7 @@ void gl_updatescreen()
 	float mx = (((float)mousex / gScreenWidth) - 0.5f) * w * 2;
 	float my = (((float)mousey / gScreenHeight) - 0.5f) * -h * 2;
 	
-	if (ci.flags & CURSOR_SHOWING)
+	if (ci.flags & CURSOR_SHOWING && gFocused)
 	{
 		glDisable(GL_TEXTURE_2D);
 		glEnable(GL_BLEND);
@@ -408,9 +418,6 @@ LRESULT CALLBACK newwinproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	WMDETECT(WM_APP)
 	WMDETECT(WM_USER)
 
-
-
-	static int focus = 1;
 	int tick = GetTickCount();
 	if (gLastUpdate == -1)
 	{
@@ -439,25 +446,20 @@ LRESULT CALLBACK newwinproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 */
 	case WM_KILLFOCUS:
 		{
-			focus = 0;
+			gFocused = 0;
 			ShowCursor(1);
 			ClipCursor(NULL);
+			gAllowResize = 1;
+			MoveWindow(gHwnd,0,0,gRealScreenWidth/10,gRealScreenHeight/10,0);			
 		}
 		break;
 	case WM_SETFOCUS: 
 		{
-			focus = 1;
+			gFocused = 1;
 
-			RECT r;
-			r.top = 0;
-			r.left = 0;
-			r.bottom = gScreenHeight;
-			r.right = gScreenWidth;
-			ClipCursor(&r);
+			gl_setup();
 
 			SetCursorPos(gScreenWidth / 2, gScreenHeight / 2);
-			ShowCursor(0); // clipcursor doesn't work with cursor disabled. Yay.
-
 			break;
 		}
 	case WM_LBUTTONDOWN:
@@ -466,7 +468,7 @@ LRESULT CALLBACK newwinproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_RBUTTONUP:
 	case WM_MOUSEMOVE:
 		{
-			if (!focus)
+			if (!gFocused)
 				return 0;
 			
 		}
@@ -481,6 +483,10 @@ LRESULT CALLBACK newwinproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			p->flags |= SWP_NOSIZE | SWP_NOMOVE;
 			return 0;		
 		}
+		else
+		{
+			gAllowResize--;
+		}
 		break;
 	}
 	
@@ -493,13 +499,6 @@ void gl_setvideomode(int w, int h, int bits)
 	gScreenWidth = w;
 	gScreenHeight = h;
 	gScreenBits = bits;
-
-	gAllowResize = 1;
-	// Go full screen..
-	MoveWindow(gHwnd, 0, 0, gRealScreenWidth, gRealScreenHeight, 0);
-	// Set position just in case..
-	//SetWindowPos(gHwnd, NULL, 0, 0, 0, 0, SWP_NOSIZE);
-	gAllowResize = 0;
 }
 
 void gl_init(HWND aHwnd)
@@ -518,7 +517,12 @@ void gl_init(HWND aHwnd)
 	// "Certain window data is cached, so changes you make using SetWindowLongPtr 
 	//  will not take effect until you call the SetWindowPos function." -- MSDN
 	SetWindowPos(gHwnd, NULL, 0, 0, 0, 0, SWP_NOSIZE); 
-	
+
+	gl_setup();
+}
+
+void gl_setup()
+{
 	RECT r;
 	r.top = 0;
 	r.left = 0;
@@ -546,8 +550,8 @@ void gl_init(HWND aHwnd)
 	*/
 
 	gAllowResize = 1;
-	// Go full screen..
-	MoveWindow(gHwnd, 640, 0, gRealScreenWidth, gRealScreenHeight, 0);
+	// Go full screen.. (add a scanline to fool win7 not to see this as a fullscreen window)
+	MoveWindow(gHwnd, 0, -1, gRealScreenWidth, gRealScreenHeight+1, 0);
 	// Set position just in case..
 	//SetWindowPos(gHwnd, NULL, 0, 0, 0, 0, SWP_NOSIZE);
 	gAllowResize = 0;
@@ -561,7 +565,6 @@ void gl_init(HWND aHwnd)
     pfd.cDepthBits=16;                                                   // Zbuffer depth
     pfd.iLayerType=PFD_MAIN_PLANE;                                       // Place the pixelformat on the main plane
 	
-	HGLRC gOpenGLRC = NULL;
 	// this is a bit heavy-handed, but the delay dll loading
 	// does seem to require a bit of work on win7..
 	// (and delay-loading the opengl dll is required to work in xp)
@@ -579,6 +582,7 @@ void gl_init(HWND aHwnd)
 	ShowWindow(gHwnd, SW_SHOW);
 	SetForegroundWindow(gHwnd);
 
+	ShowCursor(1);
 	r.top = 0;
 	r.left = 0;
 	r.bottom = gScreenHeight;
