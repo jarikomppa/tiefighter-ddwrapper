@@ -4,8 +4,10 @@
 
 void *d3d9InterfaceQuery(REFIID a);
 
+GUID gFakeDeviceGuid = { 0xfa83, 2, 3, { 4, 5,  6,  7,  8,  9,  10,  11 } };
+
 void genericQueryInterface(REFIID a, void **ptr)
-{
+{	
 #define QUERYINTERFACE(x) \
 	if(a==IID_##x) \
 		{ \
@@ -57,6 +59,14 @@ void genericQueryInterface(REFIID a, void **ptr)
 	QUERYINTERFACE(IDirectDrawSurface3);
 	QUERYINTERFACE(IDirectDrawSurface4);
 	QUERYINTERFACE(IDirectDrawSurface7);
+
+	if(a==gFakeDeviceGuid) 
+	{ 
+		*ptr = (void*)new myIDirect3DDevice(*(IDirect3DDevice **)ptr); 
+		logf("Wrapped: IDirect3DDevice\n");
+		wrapstore(orig, *ptr);
+	}
+
 
 	if (orig == *ptr)
 	{

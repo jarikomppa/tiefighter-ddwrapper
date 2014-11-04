@@ -49,5 +49,6 @@ public:
   HRESULT __stdcall NextLight(LPDIRECT3DLIGHT a, LPDIRECT3DLIGHT * b, DWORD c);
 
   IDirect3DViewport * mOriginal;
+  D3DVIEWPORT mViewport;
 };
 

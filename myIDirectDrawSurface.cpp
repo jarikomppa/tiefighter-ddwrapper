@@ -121,7 +121,11 @@ HRESULT __stdcall myIDirectDrawSurface::QueryInterface(REFIID riid, LPVOID FAR *
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDrawSurface::QueryInterface(REFIID, LPVOID FAR * 0x%x);", ppvObj);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->QueryInterface(riid, ppvObj);
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   if (x == 0) genericQueryInterface(riid, ppvObj);
@@ -174,7 +178,11 @@ HRESULT __stdcall myIDirectDrawSurface::AddAttachedSurface(LPDIRECTDRAWSURFACE a
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDrawSurface::AddAttachedSurface(LPDIRECTDRAWSURFACE 0x%x);", a);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->AddAttachedSurface((a)?((myIDirectDrawSurface *)a)->mOriginal:0);
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();

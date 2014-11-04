@@ -164,7 +164,11 @@ HRESULT __stdcall myIDirect3DDevice::AddViewport(LPDIRECT3DVIEWPORT a)
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DDevice::AddViewport(LPDIRECT3DVIEWPORT 0x%x);", a);
+#ifdef PASSTHROUGH_WRAPPER  
   HRESULT x = mOriginal->AddViewport((a)?((myIDirect3DViewport *)a)->mOriginal:0);
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
@@ -176,7 +180,11 @@ HRESULT __stdcall myIDirect3DDevice::DeleteViewport(LPDIRECT3DVIEWPORT a)
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DDevice::DeleteViewport(LPDIRECT3DVIEWPORT 0x%x);", a);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->DeleteViewport((a)?((myIDirect3DViewport *)a)->mOriginal:0);
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
@@ -232,7 +240,52 @@ HRESULT __stdcall myIDirect3DDevice::EnumTextureFormats(LPD3DENUMTEXTUREFORMATSC
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DDevice::EnumTextureFormats(LPD3DENUMTEXTUREFORMATSCALLBACK 0x%x, LPVOID 0x%x);", a, b);
+#ifdef PASSTHROUGH_WRAPPER  
   HRESULT x = mOriginal->EnumTextureFormats(a, b);
+#else
+  HRESULT x = 0;
+  DDSURFACEDESC ddsd;
+  ddsd.dwSize = sizeof(ddsd);
+  ddsd.dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT;
+  ddsd.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
+  ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+	  //DDPF_ALPHAPIXELS
+	  //DDPF_PALETTEINDEXED
+  ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
+  ddsd.ddpfPixelFormat.dwRBitMask = ((1 << 5)-1) << 11;
+  ddsd.ddpfPixelFormat.dwGBitMask = ((1 << 6)-1) << 5;
+  ddsd.ddpfPixelFormat.dwBBitMask = ((1 << 5)-1) << 0;
+  ddsd.ddpfPixelFormat.dwRGBAlphaBitMask = 0;
+
+	ddsd.ddsCaps.dwCaps = DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY;
+		//DDSCAPS_PALETTE ?
+		//DDSCAPS_SYSTEMMEMORY ?
+		//DDSCAPS_VIDEOMEMORY ?
+	// DDSCAPS_TEXTURE?
+	// DDSCAPS_3DDEVICE? 
+
+  a(&ddsd,b);
+
+  ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+  ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
+  ddsd.ddpfPixelFormat.dwRBitMask = ((1 << 5)-1) << 10;
+  ddsd.ddpfPixelFormat.dwGBitMask = ((1 << 5)-1) << 5;
+  ddsd.ddpfPixelFormat.dwBBitMask = ((1 << 5)-1) << 0;
+  ddsd.ddpfPixelFormat.dwRGBAlphaBitMask = 1 << 15;
+
+  a(&ddsd,b);
+
+  ddsd.ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8;
+  ddsd.ddpfPixelFormat.dwRGBBitCount = 8;
+  ddsd.ddpfPixelFormat.dwRBitMask = 0;
+  ddsd.ddpfPixelFormat.dwGBitMask = 0;
+  ddsd.ddpfPixelFormat.dwBBitMask = 0;
+  ddsd.ddpfPixelFormat.dwRGBAlphaBitMask = 0;
+  ddsd.ddsCaps.dwCaps = DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY | DDSCAPS_PALETTE;
+
+   a(&ddsd,b);
+
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();

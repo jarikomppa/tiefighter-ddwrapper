@@ -66,7 +66,11 @@ ULONG __stdcall myIDirect3DViewport::Release()
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DViewport::Release();");
+#ifdef PASSTHROUGH_WRAPPER
   ULONG x = mOriginal->Release();
+#else
+  ULONG x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   if (x == 0)
@@ -84,7 +88,22 @@ HRESULT __stdcall myIDirect3DViewport::Initialize(LPDIRECT3D a)
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DViewport::Initialize(LPDIRECT3D 0x%x);", a);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->Initialize((a)?((myIDirect3D *)a)->mOriginal:0);
+#else
+  HRESULT x = 0;
+  mViewport.dwSize = sizeof(mViewport);
+  mViewport.dwWidth = 640;
+  mViewport.dwHeight = 480;
+  mViewport.dwX = 0;
+  mViewport.dwY = 0;
+  mViewport.dvMaxX = 640;
+  mViewport.dvMaxY = 480;
+  mViewport.dvMinZ = 1;
+  mViewport.dvMaxZ = 1000;
+  mViewport.dvScaleX = 1;
+  mViewport.dvScaleY = 1;  
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
@@ -96,7 +115,12 @@ HRESULT __stdcall myIDirect3DViewport::GetViewport(LPD3DVIEWPORT a)
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DViewport::GetViewport(LPD3DVIEWPORT 0x%x);", a);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->GetViewport(a);
+#else
+  HRESULT x = 0;
+  *a = mViewport;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
@@ -108,7 +132,12 @@ HRESULT __stdcall myIDirect3DViewport::SetViewport(LPD3DVIEWPORT a)
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DViewport::SetViewport(LPD3DVIEWPORT 0x%x);", a);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->SetViewport(a);
+#else
+  HRESULT x = 0;
+  mViewport = *a;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
