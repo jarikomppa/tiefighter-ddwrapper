@@ -66,7 +66,11 @@ ULONG __stdcall myIDirect3DExecuteBuffer::Release()
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DExecuteBuffer::Release();");
+#ifdef PASSTHROUGH_WRAPPER
   ULONG x = mOriginal->Release();
+#else
+  ULONG x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   if (x == 0)
@@ -84,7 +88,12 @@ HRESULT __stdcall myIDirect3DExecuteBuffer::Initialize(LPDIRECT3DDEVICE a, LPD3D
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DExecuteBuffer::Initialize(LPDIRECT3DDEVICE 0x%x, LPD3DEXECUTEBUFFERDESC 0x%x);", a, b);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->Initialize((a)?((myIDirect3DDevice *)a)->mOriginal:0, b);
+#else
+  HRESULT x = 0;
+  mDesc = *b;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
@@ -96,7 +105,13 @@ HRESULT __stdcall myIDirect3DExecuteBuffer::Lock(LPD3DEXECUTEBUFFERDESC a)
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DExecuteBuffer::Lock(LPD3DEXECUTEBUFFERDESC 0x%x);", a);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->Lock(a);
+#else
+  HRESULT x = 0;
+  a->lpData = &mData;
+  a->dwCaps = D3DDEBCAPS_SYSTEMMEMORY;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
@@ -108,7 +123,11 @@ HRESULT __stdcall myIDirect3DExecuteBuffer::Unlock()
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DExecuteBuffer::Unlock();");
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->Unlock();
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
@@ -120,7 +139,12 @@ HRESULT __stdcall myIDirect3DExecuteBuffer::SetExecuteData(LPD3DEXECUTEDATA a)
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DExecuteBuffer::SetExecuteData(LPD3DEXECUTEDATA 0x%x);", a);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->SetExecuteData(a);
+#else
+  HRESULT x = 0;
+  mExec = *a;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
@@ -132,7 +156,12 @@ HRESULT __stdcall myIDirect3DExecuteBuffer::GetExecuteData(LPD3DEXECUTEDATA a)
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DExecuteBuffer::GetExecuteData(LPD3DEXECUTEDATA 0x%x);", a);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->GetExecuteData(a);
+#else
+  HRESULT x = 0;
+  *a = mExec;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();

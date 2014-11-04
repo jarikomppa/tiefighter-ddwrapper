@@ -120,6 +120,7 @@ HRESULT __stdcall myIDirect3DDevice::CreateExecuteBuffer(LPD3DEXECUTEBUFFERDESC 
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DDevice::CreateExecuteBuffer(LPD3DEXECUTEBUFFERDESC 0x%x, LPDIRECT3DEXECUTEBUFFER * 0x%x, IUnknown *);", a, b);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->CreateExecuteBuffer(a, b, c);
   logfc(" -> return %d\n", x);
   pushtab();
@@ -132,6 +133,17 @@ HRESULT __stdcall myIDirect3DDevice::CreateExecuteBuffer(LPD3DEXECUTEBUFFERDESC 
   }
   *b = n;
   poptab();
+#else
+  HRESULT x = 0;
+  logfc(" -> return %d\n", x);
+  pushtab();
+  myIDirect3DExecuteBuffer * n = new myIDirect3DExecuteBuffer(*b);
+    wrapstore(n, *b);
+    logf("Wrapped.\n");
+  
+  *b = n;
+  poptab();
+#endif
   LeaveCriticalSection(&gCS);
   return x;
 }
@@ -152,7 +164,11 @@ HRESULT __stdcall myIDirect3DDevice::Execute(LPDIRECT3DEXECUTEBUFFER a, LPDIRECT
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DDevice::Execute(LPDIRECT3DEXECUTEBUFFER 0x%x, LPDIRECT3DVIEWPORT 0x%x, DWORD %d);", a, b, c);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->Execute((a)?((myIDirect3DExecuteBuffer *)a)->mOriginal:0, (b)?((myIDirect3DViewport *)b)->mOriginal:0, c);
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
@@ -345,7 +361,11 @@ HRESULT __stdcall myIDirect3DDevice::BeginScene()
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DDevice::BeginScene();");
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->BeginScene();
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
@@ -357,7 +377,11 @@ HRESULT __stdcall myIDirect3DDevice::EndScene()
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DDevice::EndScene();");
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->EndScene();
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();

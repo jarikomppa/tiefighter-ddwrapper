@@ -66,7 +66,11 @@ ULONG __stdcall myIDirectDraw2::Release()
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDraw2::Release();");
+#ifdef PASSTHROUGH_WRAPPER
   ULONG x = mOriginal->Release();
+#else
+  ULONG x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   if (x == 0)
@@ -367,7 +371,14 @@ HRESULT __stdcall myIDirectDraw2::GetAvailableVidMem(LPDDSCAPS a, LPDWORD b, LPD
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDraw2::GetAvailableVidMem(LPDDSCAPS 0x%x, LPDWORD 0x%x, LPDWORD 0x%x);", a, b, c);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->GetAvailableVidMem(a, b, c);
+#else
+  HRESULT x = 0;
+  *b = 1024*1024*16; // I'd guess 16 megs is believable?
+  *c = 1024*1024*16;
+
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();

@@ -71,6 +71,8 @@ public:
 
   IDirectDrawSurface * mOriginal;
   DDSURFACEDESC mSurfaceDesc;
+  DDCOLORKEY mColorkey;
+  int mUseColorkey;
   myIDirectDrawPalette *mCurrentPalette;
   unsigned char * mSurfaceData;
   unsigned char * mRealSurfaceData;

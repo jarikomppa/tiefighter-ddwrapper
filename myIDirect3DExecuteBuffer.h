@@ -43,5 +43,8 @@ public:
   HRESULT __stdcall Optimize(DWORD a);
 
   IDirect3DExecuteBuffer * mOriginal;
+  D3DEXECUTEBUFFERDESC mDesc;
+  D3DEXECUTEDATA mExec;
+  int mData[65536];
 };
 

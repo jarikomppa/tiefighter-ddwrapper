@@ -31,7 +31,7 @@ myIDirectDrawSurface::myIDirectDrawSurface(IDirectDrawSurface * aOriginal, LPDDS
   logf("myIDirectDrawSurface ctor %x", this);
 
   mOriginal = aOriginal;
-
+  mUseColorkey = 0;
   mSurfaceData = NULL;
   mRealSurfaceData = NULL;
   mCurrentPalette = NULL;
@@ -765,7 +765,14 @@ HRESULT __stdcall myIDirectDrawSurface::SetColorKey(DWORD a, LPDDCOLORKEY b)
 {
   EnterCriticalSection(&gCS);
   logf("myIDirectDrawSurface::SetColorKey(DWORD %d, LPDDCOLORKEY 0x%x);", a, b);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->SetColorKey(a, b);
+#else
+  HRESULT x = 0;
+  mColorkey = *b;
+  mUseColorkey = 1;
+#endif
+
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
