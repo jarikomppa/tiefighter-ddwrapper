@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include <windowsx.h>
 #include <gl/gl.h>
+#include <math.h>
 #include "wrapper.h"
 
 int gLastUpdate = -1;
@@ -104,14 +105,12 @@ void gl_updatescreen()
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 
-	glShadeModel(GL_SMOOTH);
-
     glEnable(GL_TEXTURE_2D);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0);
 	if (gFocused)
 		glViewport(0, 0, gRealScreenWidth, gRealScreenHeight);
 	else
-		glViewport(0, 0, gRealScreenWidth/10, gRealScreenHeight/10);
+		glViewport(0, 0, gRealScreenWidth/4, gRealScreenHeight/4);
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -156,16 +155,16 @@ void gl_updatescreen()
 	{
 		glDisable(GL_TEXTURE_2D);
 		glEnable(GL_BLEND);
-		glBlendFunc(GL_ONE, GL_ONE);
-	    glColor4f(0.2f,0.2f,0.2f,1.0f); 
-		glBegin(GL_TRIANGLES);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glBegin(GL_TRIANGLES);	    
+			glColor4f(1,1,1,0.2f); 
 			glVertex2f( mx, my);
 			glVertex2f( mx+0.05f*r_aspect, my-0.02f*aspect);
 			glVertex2f( mx+0.02f*r_aspect, my-0.05f*aspect);	
 			glVertex2f( mx, my);
 			glVertex2f( mx+0.04f*r_aspect, my-0.01f*aspect);
 			glVertex2f( mx+0.01f*r_aspect, my-0.04f*aspect);	
-		    glColor4f(0.4f,0.4f,0.4f,1.0f); 
+		    glColor4f(1,1,1,0.6f); 
 			glVertex2f( mx, my);
 			glVertex2f( mx+0.045f*r_aspect, my-0.015f*aspect);
 			glVertex2f( mx+0.015f*r_aspect, my-0.045f*aspect);	
@@ -173,9 +172,7 @@ void gl_updatescreen()
 		glDisable(GL_BLEND);
 	}
 
-
 	SwapBuffers(gWindowDC);
-
 }
 
 
@@ -437,31 +434,45 @@ LRESULT CALLBACK newwinproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	//SetCapture(hWnd); // causes horrible input lag, so let's not use it
 	switch (uMsg)
 	{
-/*
-// doesn't seem to be enough to let us alt-tab.. game probably uses some other hook.
-	case WM_SYSKEYDOWN:
-	case WM_SYSKEYUP:
-	case WM_SYSCOMMAND:
-		return DefWindowProc(hWnd, uMsg, wParam, lParam);		
-*/
 	case WM_KILLFOCUS:
 		{
-			gFocused = 0;
-			ShowCursor(1);
-			ClipCursor(NULL);
-			gAllowResize = 1;
-			MoveWindow(gHwnd,0,0,gRealScreenWidth/10,gRealScreenHeight/10,0);			
+			if (gFocused)
+			{
+				logf("---- Kill focus ----\n");
+				gFocused = 0;
+				gAllowResize = 1;
+				ShowCursor(1);
+				ClipCursor(NULL);
+				RECT rect;
+				rect.left = 0;
+				rect.top = 0;
+				rect.right = gRealScreenWidth / 4;
+				rect.bottom = gRealScreenHeight / 4;
+				SetWindowLongPtr(gHwnd, GWL_STYLE, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS);
+				AdjustWindowRect(&rect, WS_CAPTION | WS_POPUPWINDOW, FALSE);
+				//MoveWindow(gHwnd, 0, 0, rect.right-rect.left, rect.bottom-rect.top, TRUE);			
+				SetWindowPos(gHwnd, HWND_TOP, 0, 0, rect.right-rect.left, rect.bottom-rect.top, SWP_NOACTIVATE | SWP_NOZORDER);
+				logf("---- /Kill focus ----\n");
+			}
 		}
 		break;
 	case WM_SETFOCUS: 
 		{
-			gFocused = 1;
+			if (!gFocused)
+			{
+				logf("---- Set focus ----\n");
 
-			gl_setup();
+				gFocused = 1;
+				gAllowResize = 1;
+				SetWindowLongPtr(gHwnd, GWL_STYLE, (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS) & ~WS_OVERLAPPEDWINDOW);
+				SetWindowPos(gHwnd, HWND_TOP, 0, 0, gRealScreenWidth, gRealScreenHeight, SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
 
-			SetCursorPos(gScreenWidth / 2, gScreenHeight / 2);
-			break;
+				SetCursorPos(gScreenWidth / 2, gScreenHeight / 2);
+
+				logf("---- /Set focus ----\n");
+			}
 		}
+		break;
 	case WM_LBUTTONDOWN:
 	case WM_LBUTTONUP:
 	case WM_RBUTTONDOWN:
@@ -469,13 +480,15 @@ LRESULT CALLBACK newwinproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_MOUSEMOVE:
 		{
 			if (!gFocused)
-				return 0;
-			
+				return 0;			
 		}
 		break;
+		/*
+		// We prooobably won't need to block this for tie fighter.
 	case WM_WINDOWPOSCHANGING:
 		if (!gAllowResize)
 		{
+			logf("---- did not allow window change ----\n");
 			// Host may try to resize and -position the window.
 			// Disallow this. The gAllowResize global is so that
 			// we can resize ourselves.
@@ -488,6 +501,7 @@ LRESULT CALLBACK newwinproc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			gAllowResize--;
 		}
 		break;
+		*/
 	}
 	
 	// Pass control to the application..	
@@ -514,6 +528,7 @@ void gl_init(HWND aHwnd)
 	// ..and replace it with our own.
 	SetWindowLongPtr(gHwnd, GWLP_WNDPROC, (LONG)newwinproc);
 	
+	gAllowResize = 1;
 	// "Certain window data is cached, so changes you make using SetWindowLongPtr 
 	//  will not take effect until you call the SetWindowPos function." -- MSDN
 	SetWindowPos(gHwnd, NULL, 0, 0, 0, 0, SWP_NOSIZE); 
@@ -550,8 +565,11 @@ void gl_setup()
 	*/
 
 	gAllowResize = 1;
-	// Go full screen.. (add a scanline to fool win7 not to see this as a fullscreen window)
-	MoveWindow(gHwnd, 0, -1, gRealScreenWidth, gRealScreenHeight+1, 0);
+	// Go full screen.. 
+	SetWindowLongPtr(gHwnd, GWL_STYLE, (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS) & ~WS_OVERLAPPEDWINDOW);
+
+	SetWindowPos(gHwnd, HWND_TOP, 0, 0, gRealScreenWidth, gRealScreenHeight, SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+
 	// Set position just in case..
 	//SetWindowPos(gHwnd, NULL, 0, 0, 0, 0, SWP_NOSIZE);
 	gAllowResize = 0;
@@ -561,7 +579,7 @@ void gl_setup()
     pfd.nVersion=1;                                                      // Version
     pfd.dwFlags=PFD_DRAW_TO_WINDOW|PFD_SUPPORT_OPENGL|PFD_DOUBLEBUFFER;  // Selected flags
     pfd.iPixelType=PFD_TYPE_RGBA;                                        // Pixelformat
-    pfd.cColorBits=16;                                                   // Pixel depth
+    pfd.cColorBits=32;                                                   // Pixel depth
     pfd.cDepthBits=16;                                                   // Zbuffer depth
     pfd.iLayerType=PFD_MAIN_PLANE;                                       // Place the pixelformat on the main plane
 	
