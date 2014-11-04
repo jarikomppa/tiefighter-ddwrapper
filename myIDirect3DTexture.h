@@ -41,5 +41,6 @@ public:
   HRESULT __stdcall Unload();
 
   IDirect3DTexture * mOriginal;
+  int mHandle;
 };
 

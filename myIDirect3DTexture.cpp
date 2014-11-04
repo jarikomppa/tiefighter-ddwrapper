@@ -26,10 +26,13 @@
 #include "wrapper.h"
 #include "myIDirect3DTexture.h"
 
+static int gHandleNo = 100;
+
 myIDirect3DTexture::myIDirect3DTexture(IDirect3DTexture * aOriginal)
 {
   logf("myIDirect3DTexture ctor\n");
   mOriginal = aOriginal;
+  mHandle = gHandleNo++;
 }
 
 myIDirect3DTexture::~myIDirect3DTexture()
@@ -66,7 +69,11 @@ ULONG __stdcall myIDirect3DTexture::Release()
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DTexture::Release();");
+#ifdef PASSTHROUGH_WRAPPER
   ULONG x = mOriginal->Release();
+#else
+  ULONG x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   if (x == 0)
@@ -96,7 +103,12 @@ HRESULT __stdcall myIDirect3DTexture::GetHandle(LPDIRECT3DDEVICE a, LPD3DTEXTURE
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DTexture::GetHandle(LPDIRECT3DDEVICE 0x%x, LPD3DTEXTUREHANDLE 0x%x);", a, b);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->GetHandle((a)?((myIDirect3DDevice *)a)->mOriginal:0, b);
+#else
+  HRESULT x = 0;
+  *b = mHandle;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
@@ -120,8 +132,13 @@ HRESULT __stdcall myIDirect3DTexture::Load(LPDIRECT3DTEXTURE a)
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DTexture::Load(LPDIRECT3DTEXTURE 0x%x);", a);
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->Load((a)?((myIDirect3DTexture *)a)->mOriginal:0);
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
+
   pushtab();
   poptab();
   LeaveCriticalSection(&gCS);
@@ -132,7 +149,11 @@ HRESULT __stdcall myIDirect3DTexture::Unload()
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3DTexture::Unload();");
+#ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->Unload();
+#else
+  HRESULT x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
