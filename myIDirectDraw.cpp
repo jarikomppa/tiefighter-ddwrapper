@@ -498,13 +498,11 @@ HRESULT __stdcall myIDirectDraw::SetCooperativeLevel(HWND a, DWORD b)
   HRESULT x = mOriginal->SetCooperativeLevel(a, b);
 #else
   HRESULT x = 0;
+  gl_init(a);
 #endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
-#ifndef PASSTHROUGH_WRAPPER
-  gl_init(a);
-#endif
   LeaveCriticalSection(&gCS);
   return x;
 }
@@ -517,13 +515,11 @@ HRESULT __stdcall myIDirectDraw::SetDisplayMode(DWORD a, DWORD b, DWORD c)
   HRESULT x = mOriginal->SetDisplayMode(a, b, c);
 #else
   HRESULT x = 0;
+  gl_setvideomode(a,b,c);
 #endif
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
-#ifndef PASSTHROUGH_WRAPPER
-  gl_setvideomode(a,b,c);
-#endif
   LeaveCriticalSection(&gCS);
   return x;
 }
@@ -536,9 +532,6 @@ HRESULT __stdcall myIDirectDraw::WaitForVerticalBlank(DWORD a, HANDLE b)
   logfc(" -> return %d\n", x);
   pushtab();
   poptab();
-#ifndef PASSTHROUGH_WRAPPER
-  gl_updatescreen();
-#endif
   LeaveCriticalSection(&gCS);
   return x;
 }

@@ -70,7 +70,12 @@ void genericQueryInterface(REFIID a, void **ptr)
 
 	if (orig == *ptr)
 	{
-		logf("**** Unknown interface - not wrapped\n");
+//		logf("**** Unknown interface - not wrapped\n");
+		logf("**** Unknown interface - assuming d3ddevice\n");
+		*ptr = (void*)new myIDirect3DDevice(*(IDirect3DDevice **)ptr); 
+		logf("Wrapped: IDirect3DDevice\n");
+		wrapstore(orig, *ptr);
+
 	}
 
 	poptab();

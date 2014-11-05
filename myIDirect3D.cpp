@@ -66,7 +66,11 @@ ULONG __stdcall myIDirect3D::Release()
 {
   EnterCriticalSection(&gCS);
   logf("myIDirect3D::Release();");
+#ifdef PASSTHROUGH_WRAPPER
   ULONG x = mOriginal->Release();
+#else
+  ULONG x = 0;
+#endif
   logfc(" -> return %d\n", x);
   pushtab();
   if (x == 0)
@@ -107,7 +111,19 @@ HRESULT __stdcall myIDirect3D::EnumDevices(LPD3DENUMDEVICESCALLBACK a, LPVOID b)
   char * dn = "ddwrapper";
   D3DDEVICEDESC d3ddd;
   d3ddd.dwSize = sizeof(D3DDEVICEDESC);
-  d3ddd.dwFlags = 0xffffffff;
+  d3ddd.dwFlags = 
+	  D3DDD_COLORMODEL |           
+	  D3DDD_DEVCAPS     |         
+	  D3DDD_TRANSFORMCAPS|        
+	  D3DDD_LIGHTINGCAPS  |       
+	  D3DDD_BCLIPPING      |      
+	  D3DDD_LINECAPS        |     
+	  D3DDD_TRICAPS          |    
+	  D3DDD_DEVICERENDERBITDEPTH  |
+	  D3DDD_DEVICEZBUFFERBITDEPTH |
+	  D3DDD_MAXBUFFERSIZE        |
+	  D3DDD_MAXVERTEXCOUNT       ;
+
   d3ddd.dcmColorModel = D3DCOLOR_RGB | D3DCOLOR_MONO;
   d3ddd.dwDevCaps = D3DDEVCAPS_FLOATTLVERTEX | D3DDEVCAPS_EXECUTESYSTEMMEMORY | D3DDEVCAPS_TLVERTEXSYSTEMMEMORY | D3DDEVCAPS_TLVERTEXVIDEOMEMORY | D3DDEVCAPS_TEXTURESYSTEMMEMORY | D3DDEVCAPS_TEXTUREVIDEOMEMORY | D3DDEVCAPS_DRAWPRIMTLVERTEX | D3DDEVCAPS_CANRENDERAFTERFLIP | D3DDEVCAPS_TEXTURENONLOCALVIDMEM | D3DDEVCAPS_HWRASTERIZATION | D3DDEVCAPS_CANBLTSYSTONONLOCAL | D3DDEVCAPS_DRAWPRIMTLVERTEX | D3DDEVCAPS_DRAWPRIMITIVES2 | D3DDEVCAPS_DRAWPRIMITIVES2EX | D3DDEVCAPS_HWTRANSFORMANDLIGHT;
   d3ddd.dtcTransformCaps.dwSize = sizeof(D3DTRANSFORMCAPS);
@@ -117,10 +133,22 @@ HRESULT __stdcall myIDirect3D::EnumDevices(LPD3DENUMDEVICESCALLBACK a, LPVOID b)
   d3ddd.dlcLightingCaps.dwNumLights = 16;
   d3ddd.dlcLightingCaps.dwLightingModel = D3DLIGHTINGMODEL_RGB;
   d3ddd.dlcLightingCaps.dwCaps = D3DLIGHTCAPS_POINT | D3DLIGHTCAPS_SPOT | D3DLIGHTCAPS_DIRECTIONAL;
-  memset(&d3ddd.dpcLineCaps,0xff,sizeof(D3DPRIMCAPS));
-  memset(&d3ddd.dpcTriCaps,0xff,sizeof(D3DPRIMCAPS));
   d3ddd.dpcLineCaps.dwSize = sizeof(D3DPRIMCAPS);
-  d3ddd.dpcTriCaps.dwSize = sizeof(D3DPRIMCAPS);
+  
+  d3ddd.dpcLineCaps.dwMiscCaps;                 /* Capability flags */
+  d3ddd.dpcLineCaps.dwRasterCaps;
+  d3ddd.dpcLineCaps.dwZCmpCaps;
+  d3ddd.dpcLineCaps.dwSrcBlendCaps;
+  d3ddd.dpcLineCaps.dwDestBlendCaps;
+  d3ddd.dpcLineCaps.dwAlphaCmpCaps;
+  d3ddd.dpcLineCaps.dwShadeCaps;
+  d3ddd.dpcLineCaps.dwTextureCaps;
+  d3ddd.dpcLineCaps.dwTextureFilterCaps;
+  d3ddd.dpcLineCaps.dwTextureBlendCaps;
+  d3ddd.dpcLineCaps.dwTextureAddressCaps;
+  d3ddd.dpcLineCaps.dwStippleWidth = 32; 
+  d3ddd.dpcLineCaps.dwStippleHeight = 32;
+  d3ddd.dpcTriCaps = d3ddd.dpcLineCaps;
   d3ddd.dwDeviceRenderBitDepth = DDBD_16; // something the game might believe..
   d3ddd.dwDeviceZBufferBitDepth = DDBD_16;
   d3ddd.dwMaxBufferSize = 0xfffe; // "must be set to zero". We'll see about that.

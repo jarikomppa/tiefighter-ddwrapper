@@ -373,6 +373,11 @@ HRESULT __stdcall myIDirectDraw2::GetAvailableVidMem(LPDDSCAPS a, LPDWORD b, LPD
   logf("myIDirectDraw2::GetAvailableVidMem(LPDDSCAPS 0x%x, LPDWORD 0x%x, LPDWORD 0x%x);", a, b, c);
 #ifdef PASSTHROUGH_WRAPPER
   HRESULT x = mOriginal->GetAvailableVidMem(a, b, c);
+  pushtab();
+  logfc("\n");
+  loghexdump(sizeof(DWORD),b);
+  loghexdump(sizeof(DWORD),c);
+  poptab();
 #else
   HRESULT x = 0;
   *b = 1024*1024*16; // I'd guess 16 megs is believable?

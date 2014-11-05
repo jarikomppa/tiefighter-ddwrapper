@@ -110,8 +110,10 @@ myIDirectDrawSurface::~myIDirectDrawSurface()
   if (this == gPrimarySurface)
 	{
 		gPrimarySurface = NULL;
+#ifndef PASSTHROUGH_WRAPPER
 		delete gBackBuffer;
 		gBackBuffer = NULL;
+#endif
 	}
 	delete[] mRealSurfaceData;
 
@@ -425,6 +427,8 @@ HRESULT __stdcall myIDirectDrawSurface::GetAttachedSurface(LPDDSCAPS a, LPDIRECT
   }
   *b = n;
   poptab();
+  if (this != gBackBuffer)
+	gBackBuffer = n;
 #else
   pushtab();
   logfc("\n");
@@ -586,6 +590,7 @@ HRESULT __stdcall myIDirectDrawSurface::GetSurfaceDesc(LPDDSURFACEDESC a)
   HRESULT x = mOriginal->GetSurfaceDesc(a);
   pushtab();
     loghexdump(sizeof(DDSURFACEDESC), a);
+  poptab();
 #else
   HRESULT x = 0;
   *a = mSurfaceDesc;
@@ -594,6 +599,7 @@ HRESULT __stdcall myIDirectDrawSurface::GetSurfaceDesc(LPDDSURFACEDESC a)
     logfc("\n");
 	logf("dwSize = %x (%d)\n", a->dwSize, a->dwSize);
 	logf("dwFlags = %x (%d)", a->dwFlags, a->dwFlags);
+/*
 #define FLAGGY(x) if ((a->dwFlags & x) == x) logfc(#x " ");
 	FLAGGY(DDSD_ALL)
 	FLAGGY(DDSD_ALPHABITDEPTH) 
@@ -633,7 +639,7 @@ HRESULT __stdcall myIDirectDrawSurface::GetSurfaceDesc(LPDDSURFACEDESC a)
 	logf("ddpfPixelFormat.dwBBitMask = %x (%d)\n", a->ddpfPixelFormat.dwBBitMask, a->ddpfPixelFormat.dwBBitMask);
 	logf("ddpfPixelFormat.dwRGBAlphaBitMask = %x (%d)\n", a->ddpfPixelFormat.dwRGBAlphaBitMask, a->ddpfPixelFormat.dwRGBAlphaBitMask);
 //	logf("ddpfPixelFormat = %d\n", ddpfPixelFormat);
-
+*/
   poptab();
 
   logfc(" -> return %d\n", x);
