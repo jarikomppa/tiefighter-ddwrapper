@@ -291,7 +291,7 @@ HRESULT __stdcall myIDirectDrawSurface::Blt(LPRECT a, LPDIRECTDRAWSURFACE b, LPR
 #else
   HRESULT x = 0;
   
-  if (d == DDBLT_COLORFILL)
+  if (d & DDBLT_COLORFILL)
   {
 	  if (this->mSurfaceDesc.ddpfPixelFormat.dwRGBBitCount == 8)
 	  {
@@ -307,7 +307,7 @@ HRESULT __stdcall myIDirectDrawSurface::Blt(LPRECT a, LPDIRECTDRAWSURFACE b, LPR
 	  }
   }
   
-  if (d == DDBLT_ROP)
+  if (d & DDBLT_ROP)
   {
 	  // assuming full copy and equal sized surfaces
 	  if (b)

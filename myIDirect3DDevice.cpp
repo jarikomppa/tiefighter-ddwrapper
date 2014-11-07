@@ -260,46 +260,103 @@ HRESULT __stdcall myIDirect3DDevice::EnumTextureFormats(LPD3DENUMTEXTUREFORMATSC
   HRESULT x = mOriginal->EnumTextureFormats(a, b);
 #else
   HRESULT x = 0;
-  DDSURFACEDESC ddsd;
-  ddsd.dwSize = sizeof(ddsd);
-  ddsd.dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT;
-  ddsd.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
-  ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-	  //DDPF_ALPHAPIXELS
-	  //DDPF_PALETTEINDEXED
-  ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
-  ddsd.ddpfPixelFormat.dwRBitMask = ((1 << 5)-1) << 11;
-  ddsd.ddpfPixelFormat.dwGBitMask = ((1 << 6)-1) << 5;
-  ddsd.ddpfPixelFormat.dwBBitMask = ((1 << 5)-1) << 0;
-  ddsd.ddpfPixelFormat.dwRGBAlphaBitMask = 0;
+	DDSURFACEDESC sd;
+	memset(&sd, 0, sizeof(DDSURFACEDESC));
 
-	ddsd.ddsCaps.dwCaps = DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY;
-		//DDSCAPS_PALETTE ?
-		//DDSCAPS_SYSTEMMEMORY ?
-		//DDSCAPS_VIDEOMEMORY ?
-	// DDSCAPS_TEXTURE?
-	// DDSCAPS_3DDEVICE? 
+	sd.dwSize = sizeof(DDSURFACEDESC);
+	sd.dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT;
+	sd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+	sd.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
 
-  a(&ddsd,b);
+	// 0555
+	sd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+	sd.ddpfPixelFormat.dwRGBBitCount = 16;
+	sd.ddpfPixelFormat.dwRBitMask = 0x7C00;
+	sd.ddpfPixelFormat.dwGBitMask = 0x03E0;
+	sd.ddpfPixelFormat.dwBBitMask = 0x001F;
+	sd.ddpfPixelFormat.dwRGBAlphaBitMask = 0x0000;
 
-  ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-  ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
-  ddsd.ddpfPixelFormat.dwRBitMask = ((1 << 5)-1) << 10;
-  ddsd.ddpfPixelFormat.dwGBitMask = ((1 << 5)-1) << 5;
-  ddsd.ddpfPixelFormat.dwBBitMask = ((1 << 5)-1) << 0;
-  ddsd.ddpfPixelFormat.dwRGBAlphaBitMask = 1 << 15;
+	if (a(&sd, b) != D3DENUMRET_OK)
+	{
+		logfc(" -> return %d\n", x);
+		LeaveCriticalSection(&gCS);
+		return D3D_OK;
+	}
 
-  a(&ddsd,b);
+	// 1555
+	sd.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+	sd.ddpfPixelFormat.dwRGBBitCount = 16;
+	sd.ddpfPixelFormat.dwRBitMask = 0x7C00;
+	sd.ddpfPixelFormat.dwGBitMask = 0x03E0;
+	sd.ddpfPixelFormat.dwBBitMask = 0x001F;
+	sd.ddpfPixelFormat.dwRGBAlphaBitMask = 0x8000;
 
-  ddsd.ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8;
-  ddsd.ddpfPixelFormat.dwRGBBitCount = 8;
-  ddsd.ddpfPixelFormat.dwRBitMask = 0;
-  ddsd.ddpfPixelFormat.dwGBitMask = 0;
-  ddsd.ddpfPixelFormat.dwBBitMask = 0;
-  ddsd.ddpfPixelFormat.dwRGBAlphaBitMask = 0;
-  ddsd.ddsCaps.dwCaps = DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY | DDSCAPS_PALETTE;
+	if (a(&sd, b) != D3DENUMRET_OK)
+	{
+		logfc(" -> return %d\n", x);
+		LeaveCriticalSection(&gCS);
+		return D3D_OK;
+	}
 
-   a(&ddsd,b);
+	// 4444
+	sd.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+	sd.ddpfPixelFormat.dwRGBBitCount = 16;
+	sd.ddpfPixelFormat.dwRBitMask = 0x0F00;
+	sd.ddpfPixelFormat.dwGBitMask = 0x00F0;
+	sd.ddpfPixelFormat.dwBBitMask = 0x000F;
+	sd.ddpfPixelFormat.dwRGBAlphaBitMask = 0xF000;
+
+	if (a(&sd, b) != D3DENUMRET_OK)
+	{
+		logfc(" -> return %d\n", x);
+		LeaveCriticalSection(&gCS);
+		return D3D_OK;
+	}
+
+	// 0565
+	sd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+	sd.ddpfPixelFormat.dwRGBBitCount = 16;
+	sd.ddpfPixelFormat.dwRBitMask = 0xF800;
+	sd.ddpfPixelFormat.dwGBitMask = 0x07E0;
+	sd.ddpfPixelFormat.dwBBitMask = 0x001F;
+	sd.ddpfPixelFormat.dwRGBAlphaBitMask = 0x0000;
+
+	if (a(&sd, b) != D3DENUMRET_OK)
+	{
+		logfc(" -> return %d\n", x);
+		LeaveCriticalSection(&gCS);
+		return D3D_OK;
+	}
+
+	// 0888
+	sd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+	sd.ddpfPixelFormat.dwRGBBitCount = 32;
+	sd.ddpfPixelFormat.dwRBitMask = 0x0FF0000;
+	sd.ddpfPixelFormat.dwGBitMask = 0x0000FF00;
+	sd.ddpfPixelFormat.dwBBitMask = 0x000000FF;
+	sd.ddpfPixelFormat.dwRGBAlphaBitMask = 0x00000000;
+
+	if (a(&sd, b) != D3DENUMRET_OK)
+	{
+		logfc(" -> return %d\n", x);
+		LeaveCriticalSection(&gCS);
+		return D3D_OK;
+	}
+
+	// 8888
+	sd.ddpfPixelFormat.dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
+	sd.ddpfPixelFormat.dwRGBBitCount = 32;
+	sd.ddpfPixelFormat.dwRBitMask = 0x00FF0000;
+	sd.ddpfPixelFormat.dwGBitMask = 0x0000FF00;
+	sd.ddpfPixelFormat.dwBBitMask = 0x000000FF;
+	sd.ddpfPixelFormat.dwRGBAlphaBitMask = 0xFF000000;
+
+	if (a(&sd, b) != D3DENUMRET_OK)
+	{
+		logfc(" -> return %d\n", x);
+		LeaveCriticalSection(&gCS);
+		return D3D_OK;
+	}
 
 #endif
   logfc(" -> return %d\n", x);

@@ -48,28 +48,28 @@ static void LoadDLL() {
 #endif
 }
 
-extern "C" void __declspec(naked) myAcquireLock() { 
+extern "C" void __declspec(naked) AcquireDDThreadLock() { 
 	logf(__FUNCTION__ "\n");
 	_asm jmp AcquireLock;
 }
-extern "C" void __declspec(naked) myParseUnknown() { 
+extern "C" void __declspec(naked) D3DParseUnknownCommand() { 
 	logf(__FUNCTION__ "\n");
 	_asm jmp ParseUnknown;
 }
-extern "C" void __declspec(naked) myInternalLock() {
+extern "C" void __declspec(naked) DDInternalLock() {
 	logf(__FUNCTION__ "\n");
 	_asm jmp InternalLock;
 }
-extern "C" void __declspec(naked) myInternalUnlock() {
+extern "C" void __declspec(naked) DDInternalUnlock() {
 	logf(__FUNCTION__ "\n");
 	_asm jmp InternalUnlock;
 }
-extern "C" void __declspec(naked) myReleaseLock() {
+extern "C" void __declspec(naked) ReleaseDDThreadLock() {
 	logf(__FUNCTION__ "\n");
 	_asm jmp ReleaseLock;
 }
 
-extern "C" HRESULT _stdcall myDirectDrawCreate(GUID* a, IDirectDraw** b, IUnknown* c) {
+extern "C" HRESULT _stdcall DirectDrawCreate(GUID* a, IDirectDraw** b, IUnknown* c) {
 	logf(__FUNCTION__ "\n");
 #ifdef PASSTHROUGH_WRAPPER
 	if(!DDrawCreate) LoadDLL();
@@ -82,7 +82,7 @@ extern "C" HRESULT _stdcall myDirectDrawCreate(GUID* a, IDirectDraw** b, IUnknow
 	return 0;
 }
 
-extern "C" HRESULT _stdcall myDirectDrawCreateEx(
+extern "C" HRESULT _stdcall DirectDrawCreateEx(
   GUID FAR *lpGUID,
   LPVOID *lplpDD,
   REFIID iid,
@@ -102,7 +102,11 @@ extern "C" HRESULT _stdcall myDirectDrawCreateEx(
 #endif
 }
 
-extern "C" HRESULT _stdcall myDirectDrawEnumerate(void* lpCallback, void* lpContext) {
+extern "C" HRESULT WINAPI DirectDrawEnumerateA(
+	_In_ LPDDENUMCALLBACKA lpCallback,
+	_In_ LPVOID lpContext
+	)
+{
 	logf(__FUNCTION__ "\n");
 #ifdef PASSTHROUGH_WRAPPER
 	if(!DDrawEnumerate) LoadDLL();
@@ -112,3 +116,81 @@ extern "C" HRESULT _stdcall myDirectDrawEnumerate(void* lpCallback, void* lpCont
 #endif
 }
 
+
+
+
+extern "C" __declspec(naked) void CompleteCreateSysmemSurface()
+{
+	logf(__FUNCTION__ "\n");
+}
+extern "C" __declspec(naked) void DDGetAttachedSurfaceLcl()
+{
+	logf(__FUNCTION__ "\n");
+}
+extern "C" __declspec(naked) void DSoundHelp()
+{
+	logf(__FUNCTION__ "\n");
+}
+extern "C" HRESULT WINAPI DirectDrawCreateClipper(
+	_In_ DWORD dwFlags,
+	_Out_ LPDIRECTDRAWCLIPPER FAR *lplpDDClipper,
+	_In_ IUnknown FAR *pUnkOuter
+	)
+{
+	logf(__FUNCTION__ "\n");
+	return E_FAIL;
+}
+
+extern "C" HRESULT WINAPI DirectDrawEnumerateExA(
+	_In_ LPDDENUMCALLBACKEXA lpCallback,
+	_In_ LPVOID lpContext,
+	_In_ DWORD dwFlags
+	)
+{
+	logf(__FUNCTION__ "\n");
+	return E_FAIL;
+}
+
+extern "C" HRESULT WINAPI DirectDrawEnumerateExW(
+	_In_ LPDDENUMCALLBACKEXW lpCallback,
+	_In_ LPVOID lpContext,
+	_In_ DWORD dwFlags
+	)
+{
+	logf(__FUNCTION__ "\n");
+	return E_FAIL;
+}
+
+extern "C" HRESULT WINAPI DirectDrawEnumerateW(
+	_In_ LPDDENUMCALLBACKW lpCallback,
+	_In_ LPVOID lpContext
+	)
+{
+	logf(__FUNCTION__ "\n");
+	return E_FAIL;
+}
+
+extern "C" __declspec(naked) void GetDDSurfaceLocal()
+{
+	logf(__FUNCTION__ "\n");
+}
+
+extern "C" __declspec(naked) void GetOLEThunkData()
+{
+	logf(__FUNCTION__ "\n");
+}
+
+extern "C" __declspec(naked) void GetSurfaceFromDC()
+{
+	logf(__FUNCTION__ "\n");
+}
+
+extern "C" __declspec(naked) void RegisterSpecialCase()
+{
+	logf(__FUNCTION__ "\n");
+}
+
+extern "C" __declspec(naked) void SetAppCompatData()
+{
+	logf(__FUNCTION__ "\n");
+}
